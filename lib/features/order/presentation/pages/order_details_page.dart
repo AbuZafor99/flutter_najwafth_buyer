@@ -1,16 +1,35 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/errors/result.dart';
 import '../../../../core/localization/app_localizations.dart';
+import '../../../../core/widgets/top_toast.dart';
+import '../../application/order_controller.dart';
 import '../../domain/order_models.dart';
 import '../widgets/review_bottom_sheet.dart';
 
-class OrderDetailsPage extends StatelessWidget {
+/// Soft-shadowed white card used throughout the order details screen.
+BoxDecoration _cardDecoration({double radius = 16}) => BoxDecoration(
+  color: Colors.white,
+  borderRadius: BorderRadius.circular(radius),
+  boxShadow: [
+    BoxShadow(
+      color: Colors.black.withValues(alpha: 0.06),
+      blurRadius: 14,
+      offset: const Offset(0, 4),
+    ),
+  ],
+);
+
+class OrderDetailsPage extends ConsumerWidget {
   const OrderDetailsPage({super.key, required this.order});
+
+  static const Color _accentBlue = Color(0xFF2E9BE5);
 
   final OrderModel order;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: Colors.white,
@@ -48,8 +67,8 @@ class OrderDetailsPage extends StatelessWidget {
       ),
       floatingActionButton: order.status == OrderStatus.delivered
           ? FloatingActionButton.extended(
-              onPressed: () => ReviewBottomSheet.show(context),
-              backgroundColor: const Color(0xFF5A91C4),
+              onPressed: () => _openReview(context, ref),
+              backgroundColor: _accentBlue,
               icon: const Icon(Icons.rate_review, color: Colors.white),
               label: Text(
                 l10n.leaveAReview,
@@ -60,15 +79,50 @@ class OrderDetailsPage extends StatelessWidget {
     );
   }
 
+  Future<void> _openReview(BuildContext context, WidgetRef ref) async {
+    final l10n = AppLocalizations.of(context);
+    final overlay = Overlay.of(context, rootOverlay: true);
+    final result = await ReviewBottomSheet.show(
+      context,
+      reviewerName: order.customerName,
+    );
+    if (result == null) return;
+
+    final repository = ref.read(orderRepositoryProvider);
+    final bookIds = order.items
+        .map((item) => item.id)
+        .where((id) => id.isNotEmpty)
+        .toSet();
+
+    String? errorMessage;
+    var submitted = false;
+    for (final bookId in bookIds) {
+      final response = await repository.submitBookReview(
+        bookId: bookId,
+        rating: result.rating,
+        comment: result.comment,
+      );
+      switch (response) {
+        case Success():
+          submitted = true;
+        case ResultFailure(error: final failure):
+          errorMessage ??= failure.message;
+      }
+    }
+
+    showTopToast(
+      null,
+      overlay: overlay,
+      title: submitted ? l10n.reviewSubmitted : (errorMessage ?? l10n.reviewSubmitted),
+      type: submitted ? ToastType.success : ToastType.error,
+    );
+  }
+
   Widget _buildDeliveryAndContact(BuildContext context) {
     final dateStr = '${order.createdAt.day}/${order.createdAt.month}/${order.createdAt.year}';
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE8EBF0)),
-      ),
+      decoration: _cardDecoration(),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -78,7 +132,7 @@ class OrderDetailsPage extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.location_on_outlined, size: 16, color: Color(0xFF5A91C4)),
+                    const Icon(Icons.location_on_outlined, size: 16, color: _accentBlue),
                     const SizedBox(width: 6),
                     Text(
                       AppLocalizations.of(context).deliveryAddress,
@@ -101,7 +155,7 @@ class OrderDetailsPage extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.phone_in_talk_outlined, size: 16, color: Color(0xFF5A91C4)),
+                    const Icon(Icons.phone_in_talk_outlined, size: 16, color: _accentBlue),
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(
@@ -148,16 +202,12 @@ class OrderDetailsPage extends StatelessWidget {
   Widget _buildOrderSummary(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE8EBF0)),
-      ),
+      decoration: _cardDecoration(),
       child: Column(
         children: [
           Row(
             children: [
-              const Icon(Icons.receipt_long_outlined, size: 20, color: Color(0xFF5A91C4)),
+              const Icon(Icons.receipt_long_outlined, size: 20, color: _accentBlue),
               const SizedBox(width: 8),
               Text(
                 AppLocalizations.of(context).orderSummary,
@@ -182,7 +232,7 @@ class OrderDetailsPage extends StatelessWidget {
               ),
               Text(
                 '\$${order.total.toStringAsFixed(2)}',
-                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFF5A91C4)),
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: _accentBlue),
               ),
             ],
           ),
@@ -210,17 +260,13 @@ class OrderDetailsPage extends StatelessWidget {
   Widget _buildItemsList(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE8EBF0)),
-      ),
+      decoration: _cardDecoration(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(Icons.shopping_cart_outlined, size: 20, color: Color(0xFF5A91C4)),
+              const Icon(Icons.shopping_cart_outlined, size: 20, color: _accentBlue),
               const SizedBox(width: 8),
               Text(
                 AppLocalizations.of(context).itemsCount(order.items.length),
@@ -232,11 +278,7 @@ class OrderDetailsPage extends StatelessWidget {
           ...order.items.map((item) => Container(
                 margin: const EdgeInsets.only(bottom: 12),
                 padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFE8EBF0)),
-                ),
+                decoration: _cardDecoration(radius: 12),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -289,7 +331,7 @@ class OrderDetailsPage extends StatelessWidget {
                           const SizedBox(height: 6),
                           Row(
                             children: [
-                              const Icon(Icons.location_on_outlined, size: 14, color: Color(0xFF5A91C4)),
+                              const Icon(Icons.location_on_outlined, size: 14, color: _accentBlue),
                               const SizedBox(width: 4),
                               const Expanded(
                                 child: Text(
@@ -330,16 +372,16 @@ class OrderDetailsPage extends StatelessWidget {
                                 children: [
                                   Text(
                                     '\$ ${item.price.toStringAsFixed(2)}',
-                                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFF5A91C4)),
+                                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: _accentBlue),
                                   ),
                                   Text(
                                     AppLocalizations.of(context).itemCount(1),
-                                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.w500, color: Color(0xFF5A91C4)),
+                                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: _accentBlue),
                                   ),
                                 ],
                               ),
                               const SizedBox(width: 8),
-                              const Icon(Icons.chevron_right, size: 18, color: Color(0xFF5A91C4)),
+                              const Icon(Icons.chevron_right, size: 18, color: _accentBlue),
                             ],
                           ),
                         ],
@@ -362,17 +404,13 @@ class OrderDetailsPage extends StatelessWidget {
 
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE8EBF0)),
-      ),
+      decoration: _cardDecoration(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(Icons.local_shipping_outlined, size: 20, color: Color(0xFF5A91C4)),
+              const Icon(Icons.local_shipping_outlined, size: 20, color: _accentBlue),
               const SizedBox(width: 8),
               Text(
                 l10n.orderStatus,
@@ -391,7 +429,7 @@ class OrderDetailsPage extends StatelessWidget {
   }
 
   Widget _buildTimelineItem(String title, String subtitle, {required bool isActive, required bool isLast}) {
-    final color = isActive ? const Color(0xFF5A91C4) : const Color(0xFFD4D9E2);
+    final color = isActive ? _accentBlue : const Color(0xFFD4D9E2);
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -430,7 +468,7 @@ class OrderDetailsPage extends StatelessWidget {
               const SizedBox(height: 4),
               Text(
                 subtitle,
-                style: TextStyle(fontSize: 11, color: isActive ? color.withOpacity(0.8) : const Color(0xFF8E98A5)),
+                style: TextStyle(fontSize: 11, color: isActive ? color : const Color(0xFF8E98A5)),
               ),
               if (!isLast) const SizedBox(height: 24),
             ],

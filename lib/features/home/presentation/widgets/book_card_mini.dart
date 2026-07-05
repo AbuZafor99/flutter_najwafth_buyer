@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/extensions/build_context_extensions.dart';
+import '../../../../core/widgets/top_toast.dart';
 import '../../application/store_controller.dart';
 import '../../domain/store_models.dart';
 import 'store_widgets.dart';
@@ -10,6 +12,17 @@ class BookCardMini extends ConsumerWidget {
 
   final BookItem book;
   final VoidCallback onTap;
+
+  void _addToCart(BuildContext context, WidgetRef ref) {
+    ref.read(storeControllerProvider.notifier).addToCart(book);
+    showTopToast(
+      context,
+      type: ToastType.success,
+      icon: Icons.shopping_cart_rounded,
+      title: context.l10n.addedToCartTitle,
+      subtitle: book.title,
+    );
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -67,7 +80,7 @@ class BookCardMini extends ConsumerWidget {
                 const SizedBox(width: 4),
                 const Spacer(),
                 GestureDetector(
-                  onTap: () => ref.read(storeControllerProvider.notifier).addToCart(book),
+                  onTap: () => _addToCart(context, ref),
                   child: const CircleAvatar(
                     radius: 14,
                     backgroundColor: Color(0xFF5A91C4),

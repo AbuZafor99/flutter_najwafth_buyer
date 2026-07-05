@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../../../core/localization/app_localizations.dart';
+import '../../../../core/widgets/top_toast.dart';
 import '../../application/profile_controller.dart';
 
 class EditProfilePage extends ConsumerStatefulWidget {
@@ -92,7 +94,10 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
         return;
       }
 
-      _showMessage('Profile updated successfully.');
+      _showMessage(
+        AppLocalizations.of(context).profileUpdated,
+        type: ToastType.success,
+      );
       Navigator.pop(context);
     } on Exception catch (error) {
       _showMessage(error.toString().replaceFirst('Exception: ', ''));
@@ -121,6 +126,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
   }
 
   Future<ImageSource?> _showImageSourceSheet() {
+    final l10n = AppLocalizations.of(context);
     return showModalBottomSheet<ImageSource>(
       context: context,
       builder: (context) {
@@ -130,12 +136,12 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
             children: [
               ListTile(
                 leading: const Icon(Icons.photo_library_outlined),
-                title: const Text('Choose from gallery'),
+                title: Text(l10n.chooseFromGallery),
                 onTap: () => Navigator.of(context).pop(ImageSource.gallery),
               ),
               ListTile(
                 leading: const Icon(Icons.camera_alt_outlined),
-                title: const Text('Take a photo'),
+                title: Text(l10n.takeAPhoto),
                 onTap: () => Navigator.of(context).pop(ImageSource.camera),
               ),
             ],
@@ -145,14 +151,13 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
     );
   }
 
-  void _showMessage(String message) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(message)));
+  void _showMessage(String message, {ToastType type = ToastType.error}) {
+    showTopToast(context, title: message, type: type);
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final profileAsync = ref.watch(profileControllerProvider);
     final profile = profileAsync.asData?.value;
     _initFromProfileIfNeeded();
@@ -171,9 +176,9 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
             size: 28,
           ),
         ),
-        title: const Text(
-          'Edit Profile',
-          style: TextStyle(
+        title: Text(
+          l10n.editProfile,
+          style: const TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w700,
             color: Color(0xFF243041),
@@ -192,43 +197,43 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                     child: ListView(
                       padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
                       children: [
-                        _buildHeroCard(profile),
+                        _buildHeroCard(profile, l10n),
                         const SizedBox(height: 16),
                         _buildSectionCard(
-                          title: 'Basic Info',
+                          title: l10n.basicInfo,
                           children: [
                             _buildInput(
-                              label: 'Full Name',
+                              label: l10n.fullNameLabel,
                               controller: _nameController,
-                              hint: 'Enter your full name',
+                              hint: l10n.fullNamePlaceholder,
                               validator: (v) => (v == null || v.trim().isEmpty)
-                                  ? 'Name is required'
+                                  ? l10n.requiredMessage(l10n.fullNameLabel)
                                   : null,
                             ),
                             _buildInput(
-                              label: 'Phone',
+                              label: l10n.phoneNumber,
                               controller: _phoneController,
-                              hint: 'Enter your phone',
+                              hint: l10n.enterYourPhoneNumber,
                               keyboardType: TextInputType.phone,
                             ),
                             _buildInput(
-                              label: 'Address',
+                              label: l10n.address,
                               controller: _addressController,
-                              hint: 'Enter your address',
+                              hint: l10n.enterYourAddress,
                             ),
                           ],
                         ),
                         const SizedBox(height: 12),
                         _buildSectionCard(
-                          title: 'Personal Info',
+                          title: l10n.personalInfo,
                           children: [
                             _buildInput(
-                              label: 'Gender',
+                              label: l10n.genderLabel,
                               controller: _genderController,
-                              hint: 'male / female / other',
+                              hint: l10n.genderHint,
                             ),
                             _buildInput(
-                              label: 'Date of Birth',
+                              label: l10n.dobLabel,
                               controller: _dobController,
                               hint: 'YYYY-MM-DD',
                               validator: (v) {
@@ -237,26 +242,26 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                                 final ok = RegExp(
                                   r'^\d{4}-\d{2}-\d{2}$',
                                 ).hasMatch(value);
-                                return ok ? null : 'Use YYYY-MM-DD format';
+                                return ok ? null : l10n.useYmdFormat;
                               },
                             ),
                             _buildInput(
-                              label: 'Age',
+                              label: l10n.ageLabel,
                               controller: _ageController,
-                              hint: 'Enter age',
+                              hint: l10n.enterAge,
                               keyboardType: TextInputType.number,
                               validator: (v) {
                                 final value = (v ?? '').trim();
                                 if (value.isEmpty) return null;
                                 return int.tryParse(value) == null
-                                    ? 'Age must be a number'
+                                    ? l10n.ageMustBeNumber
                                     : null;
                               },
                             ),
                             _buildInput(
-                              label: 'Bio',
+                              label: l10n.bioLabel,
                               controller: _bioController,
-                              hint: 'Write your bio',
+                              hint: l10n.writeYourBio,
                               maxLines: 4,
                             ),
                           ],
@@ -293,9 +298,9 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                                   ),
                                 ),
                               )
-                            : const Text(
-                                'Save Changes',
-                                style: TextStyle(
+                            : Text(
+                                l10n.saveChanges,
+                                style: const TextStyle(
                                   fontWeight: FontWeight.w700,
                                   fontSize: 16,
                                 ),
@@ -309,7 +314,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
     );
   }
 
-  Widget _buildHeroCard(ProfileState? profile) {
+  Widget _buildHeroCard(ProfileState? profile, AppLocalizations l10n) {
     final imageProvider = _selectedAvatarPath != null
         ? FileImage(File(_selectedAvatarPath!))
         : ((profile?.avatarUrl.isNotEmpty ?? false)
@@ -361,7 +366,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
               children: [
                 Text(
                   _nameController.text.trim().isEmpty
-                      ? 'Your Name'
+                      ? l10n.yourNamePlaceholder
                       : _nameController.text.trim(),
                   style: const TextStyle(
                     fontSize: 17,
@@ -380,9 +385,9 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                const Text(
-                  'Tap camera icon to update avatar',
-                  style: TextStyle(
+                Text(
+                  l10n.tapCameraToUpdateAvatar,
+                  style: const TextStyle(
                     fontSize: 12,
                     color: Color(0xFF5A91C4),
                     fontWeight: FontWeight.w600,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/localization/app_localizations.dart';
+import '../../../../core/storage/storage_providers.dart';
 import '../../../auth/application/auth_controller.dart';
 import '../../application/profile_controller.dart';
 import '../../../auth/presentation/auth_routes.dart';
@@ -20,7 +21,21 @@ class ProfileTab extends ConsumerStatefulWidget {
 }
 
 class _ProfileTabState extends ConsumerState<ProfileTab> {
+  static const _pushPrefKey = 'buyer_push_notifications_enabled';
+
   bool _pushNotifications = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _pushNotifications =
+        ref.read(keyValueStorageProvider).readBool(_pushPrefKey) ?? true;
+  }
+
+  void _setPushNotifications(bool enabled) {
+    setState(() => _pushNotifications = enabled);
+    ref.read(keyValueStorageProvider).writeBool(_pushPrefKey, enabled);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,6 +48,7 @@ class _ProfileTabState extends ConsumerState<ProfileTab> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
+        toolbarHeight: 72,
         title: Text(
           l10n.profile,
           style: TextStyle(
@@ -63,7 +79,7 @@ class _ProfileTabState extends ConsumerState<ProfileTab> {
                           width: 60,
                           height: 60,
                           fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => const Icon(
+                          errorBuilder: (_, _, _) => const Icon(
                             Icons.person,
                             size: 30,
                             color: Color(0xFF9CA6B3),
@@ -186,8 +202,8 @@ class _ProfileTabState extends ConsumerState<ProfileTab> {
                 ),
                 Switch(
                   value: _pushNotifications,
-                  onChanged: (val) => setState(() => _pushNotifications = val),
-                  activeColor: Colors.white,
+                  onChanged: _setPushNotifications,
+                  activeThumbColor: Colors.white,
                   activeTrackColor: const Color(0xFF5A91C4),
                   inactiveThumbColor: Colors.white,
                   inactiveTrackColor: const Color(0xFFE8EBF0),
@@ -203,7 +219,7 @@ class _ProfileTabState extends ConsumerState<ProfileTab> {
               final confirm = await LogoutDialog.show(context);
               if (confirm == true) {
                 await ref.read(authControllerProvider.notifier).logout();
-                if (mounted) {
+                if (context.mounted) {
                   Navigator.of(context).pushNamedAndRemoveUntil(
                     AuthRoutes.signIn,
                     (route) => false,

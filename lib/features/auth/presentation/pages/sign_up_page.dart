@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/utils/validators.dart';
+import '../../../../core/widgets/top_toast.dart';
 import '../../application/auth_controller.dart';
 import '../auth_routes.dart';
 import '../widgets/auth_scaffold.dart';
@@ -43,6 +44,7 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
       return;
     }
 
+    final l10n = AppLocalizations.of(context);
     setState(() => _isSubmitting = true);
     try {
       await ref
@@ -63,7 +65,9 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
         context,
       ).pushNamedAndRemoveUntil(AuthRoutes.home, (route) => false);
     } on AuthFlowException catch (error) {
-      _showMessage(error.message);
+      _showMessage(error.isNetworkError ? l10n.noInternetConnection : error.message);
+    } catch (_) {
+      _showMessage(l10n.somethingWentWrong);
     } finally {
       if (mounted) {
         setState(() => _isSubmitting = false);
@@ -71,10 +75,8 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
     }
   }
 
-  void _showMessage(String message) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(message)));
+  void _showMessage(String message, {ToastType type = ToastType.error}) {
+    showTopToast(context, title: message, type: type);
   }
 
   @override

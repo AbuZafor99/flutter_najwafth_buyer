@@ -80,6 +80,8 @@ final class StoreController extends Notifier<StoreState> {
       }
     }
 
+    selectedLanguage ??= AppLanguage.french;
+
     final initial = StoreState(
       selectedLanguage: selectedLanguage,
       cartQuantities: const {},

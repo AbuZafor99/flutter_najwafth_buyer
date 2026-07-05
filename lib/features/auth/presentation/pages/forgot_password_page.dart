@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/utils/validators.dart';
+import '../../../../core/widgets/top_toast.dart';
 import '../../application/auth_controller.dart';
 import '../auth_routes.dart';
 import '../widgets/auth_scaffold.dart';
@@ -44,13 +45,17 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
         return;
       }
 
-      ScaffoldMessenger.of(
+      showTopToast(
         context,
-      ).showSnackBar(SnackBar(content: Text(l10n.otpSentToEmail)));
+        title: l10n.otpSentToEmail,
+        type: ToastType.success,
+      );
 
       Navigator.of(context).pushNamed(AuthRoutes.enterOtp);
     } on AuthFlowException catch (error) {
-      _showMessage(error.message);
+      _showMessage(error.isNetworkError ? l10n.noInternetConnection : error.message);
+    } catch (_) {
+      _showMessage(l10n.somethingWentWrong);
     } finally {
       if (mounted) {
         setState(() => _isSubmitting = false);
@@ -58,10 +63,8 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
     }
   }
 
-  void _showMessage(String message) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(message)));
+  void _showMessage(String message, {ToastType type = ToastType.error}) {
+    showTopToast(context, title: message, type: type);
   }
 
   @override

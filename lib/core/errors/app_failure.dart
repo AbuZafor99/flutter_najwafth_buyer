@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:dio/dio.dart';
 
 import 'app_exception.dart';
@@ -9,6 +11,7 @@ final class AppFailure {
     this.statusCode,
     this.cause,
     this.stackTrace,
+    this.isNetworkError = false,
   });
 
   final String message;
@@ -16,6 +19,10 @@ final class AppFailure {
   final int? statusCode;
   final Object? cause;
   final StackTrace? stackTrace;
+
+  /// True when the request failed because the device could not reach the
+  /// server (offline, DNS failure, timeout) rather than a server response.
+  final bool isNetworkError;
 
   factory AppFailure.fromObject(Object error, [StackTrace? stackTrace]) {
     if (error is AppFailure) {
@@ -38,6 +45,16 @@ final class AppFailure {
         statusCode: error.response?.statusCode,
         cause: error,
         stackTrace: error.stackTrace,
+        isNetworkError: _isConnectivityError(error),
+      );
+    }
+
+    if (error is SocketException) {
+      return AppFailure(
+        message: 'No internet connection.',
+        cause: error,
+        stackTrace: stackTrace,
+        isNetworkError: true,
       );
     }
 
@@ -48,21 +65,45 @@ final class AppFailure {
     );
   }
 
+  /// A connectivity failure has no server response — the device never reached
+  /// the backend (offline, DNS failure, timeout, or a socket error surfaced as
+  /// [DioExceptionType.unknown]).
+  static bool _isConnectivityError(DioException error) {
+    switch (error.type) {
+      case DioExceptionType.connectionError:
+      case DioExceptionType.connectionTimeout:
+      case DioExceptionType.sendTimeout:
+      case DioExceptionType.receiveTimeout:
+        return true;
+      case DioExceptionType.unknown:
+        return error.error is SocketException;
+      case DioExceptionType.badCertificate:
+      case DioExceptionType.badResponse:
+      case DioExceptionType.cancel:
+        return false;
+    }
+  }
+
   static String _messageFromDio(DioException error) {
+    if (_isConnectivityError(error)) {
+      return switch (error.type) {
+        DioExceptionType.connectionTimeout ||
+        DioExceptionType.sendTimeout ||
+        DioExceptionType.receiveTimeout => 'The connection timed out.',
+        _ => 'No internet connection.',
+      };
+    }
+
     final responseMessage = error.response?.data;
     if (responseMessage is Map && responseMessage['message'] is String) {
       return responseMessage['message'] as String;
     }
 
     return switch (error.type) {
-      DioExceptionType.connectionTimeout => 'Connection timed out.',
-      DioExceptionType.sendTimeout => 'Request timed out.',
-      DioExceptionType.receiveTimeout => 'Response timed out.',
       DioExceptionType.badCertificate => 'Unable to verify the server.',
       DioExceptionType.badResponse => 'The server returned an error.',
       DioExceptionType.cancel => 'Request was cancelled.',
-      DioExceptionType.connectionError => 'No internet connection.',
-      DioExceptionType.unknown => 'Something went wrong. Please try again.',
+      _ => 'Something went wrong. Please try again.',
     };
   }
 }

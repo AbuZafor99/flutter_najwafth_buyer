@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/localization/app_localizations.dart';
+import '../../../../core/widgets/top_toast.dart';
 import '../../application/auth_controller.dart';
 import '../auth_routes.dart';
 import '../widgets/auth_scaffold.dart';
@@ -77,7 +78,9 @@ class _EnterOtpPageState extends ConsumerState<EnterOtpPage> {
       }
       Navigator.of(context).pushReplacementNamed(AuthRoutes.resetPassword);
     } on AuthFlowException catch (error) {
-      _showMessage(error.message);
+      _showMessage(error.isNetworkError ? l10n.noInternetConnection : error.message);
+    } catch (_) {
+      _showMessage(l10n.somethingWentWrong);
     } finally {
       if (mounted) {
         setState(() => _isSubmitting = false);
@@ -92,17 +95,19 @@ class _EnterOtpPageState extends ConsumerState<EnterOtpPage> {
     }
 
     if (_secondsLeft > 0) {
-      _showMessage(l10n.waitBeforeResendingOtp(_secondsLeft));
+      _showMessage(l10n.waitBeforeResendingOtp(_secondsLeft), type: ToastType.info);
       return;
     }
 
     setState(() => _isResending = true);
     try {
       await ref.read(authControllerProvider.notifier).resendOtp();
-      _showMessage(l10n.newOtpSent);
+      _showMessage(l10n.newOtpSent, type: ToastType.success);
       _syncTimer();
     } on AuthFlowException catch (error) {
-      _showMessage(error.message);
+      _showMessage(error.isNetworkError ? l10n.noInternetConnection : error.message);
+    } catch (_) {
+      _showMessage(l10n.somethingWentWrong);
     } finally {
       if (mounted) {
         setState(() => _isResending = false);
@@ -110,10 +115,8 @@ class _EnterOtpPageState extends ConsumerState<EnterOtpPage> {
     }
   }
 
-  void _showMessage(String message) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(message)));
+  void _showMessage(String message, {ToastType type = ToastType.error}) {
+    showTopToast(context, title: message, type: type);
   }
 
   @override

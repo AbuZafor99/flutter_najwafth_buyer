@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/localization/app_localizations.dart';
+import '../../../../core/widgets/top_toast.dart';
 import '../../../home/application/book_provider.dart';
 import '../../../home/application/store_controller.dart';
 import '../../../home/domain/store_models.dart';
@@ -112,7 +113,7 @@ class _BookDetailsPageState extends ConsumerState<BookDetailsPage> {
 
                 // ── Author ────────────────────────────────────────────
                 Text(
-                  book.author,
+                 "BY ${book.author.toUpperCase()}",
                   style: const TextStyle(
                     fontSize: 13,
                     color: Color(0xFF8E98A5),
@@ -131,7 +132,7 @@ class _BookDetailsPageState extends ConsumerState<BookDetailsPage> {
                         book.shopName ?? '123 Library, Book City',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 12, color: Color(0xFF8E98A5)),
+                        style: const TextStyle(fontSize: 12, color: Color.fromARGB(255, 99, 105, 112)),
                       ),
                     ),
                   ],
@@ -347,8 +348,12 @@ class _BookDetailsPageState extends ConsumerState<BookDetailsPage> {
   void _addToCart(BookItem book) {
     final l10n = AppLocalizations.of(context);
     ref.read(storeControllerProvider.notifier).addToCart(book, quantity: _quantity);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(l10n.addedToCart(book.title))),
+    showTopToast(
+      context,
+      type: ToastType.success,
+      icon: Icons.shopping_cart_rounded,
+      title: l10n.addedToCartTitle,
+      subtitle: book.title,
     );
     Navigator.of(context).pop();
   }

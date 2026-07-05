@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/localization/app_localizations.dart';
+import '../../../../core/widgets/top_toast.dart';
 import '../../application/profile_controller.dart';
 
 class ChangePasswordPage extends ConsumerStatefulWidget {
@@ -49,7 +50,7 @@ class _ChangePasswordPageState extends ConsumerState<ChangePasswordPage> {
       if (!mounted) {
         return;
       }
-      _showMessage(l10n.passwordChangedSuccessfully);
+      _showMessage(l10n.passwordChangedSuccessfully, type: ToastType.success);
       Navigator.pop(context);
     } on Exception catch (error) {
       _showMessage(error.toString().replaceFirst('Exception: ', ''));
@@ -60,10 +61,8 @@ class _ChangePasswordPageState extends ConsumerState<ChangePasswordPage> {
     }
   }
 
-  void _showMessage(String message) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(message)));
+  void _showMessage(String message, {ToastType type = ToastType.error}) {
+    showTopToast(context, title: message, type: type);
   }
 
   @override

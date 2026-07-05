@@ -25,10 +25,12 @@ class _OrderHistoryPageState extends ConsumerState<OrderHistoryPage> {
 
     final filteredOrders = orders.where((order) {
       if (_selectedFilter == 'all') return true;
-      if (_selectedFilter == 'completed')
+      if (_selectedFilter == 'completed') {
         return order.status == OrderStatus.delivered;
-      if (_selectedFilter == 'picked')
+      }
+      if (_selectedFilter == 'picked') {
         return order.status == OrderStatus.picked;
+      }
       return true;
     }).toList();
 
@@ -66,9 +68,21 @@ class _OrderHistoryPageState extends ConsumerState<OrderHistoryPage> {
               children: [
                 _buildFilterChip(context, 'all'),
                 const SizedBox(width: 12),
-                _buildFilterChip(context, 'completed', count: 3),
+                _buildFilterChip(
+                  context,
+                  'completed',
+                  count: orders
+                      .where((o) => o.status == OrderStatus.delivered)
+                      .length,
+                ),
                 const SizedBox(width: 12),
-                _buildFilterChip(context, 'picked', count: 3),
+                _buildFilterChip(
+                  context,
+                  'picked',
+                  count: orders
+                      .where((o) => o.status == OrderStatus.picked)
+                      .length,
+                ),
               ],
             ),
           ),

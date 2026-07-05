@@ -6,7 +6,7 @@ import '../../domain/store_models.dart';
 import 'store_widgets.dart';
 
 class FeaturedBookCard extends ConsumerWidget {
-  const FeaturedBookCard({required this.book, required this.onTap});
+  const FeaturedBookCard({super.key, required this.book, required this.onTap});
 
   final BookItem book;
   final VoidCallback onTap;

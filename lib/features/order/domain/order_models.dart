@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/localization/app_localizations.dart';
 import '../../home/domain/store_models.dart';
 
-enum OrderStatus { pending, processing, picked, delivered }
+enum OrderStatus { pending, processing, picked, delivered, cancelled }
 
 extension OrderStatusX on OrderStatus {
   String label(AppLocalizations l10n) => switch (this) {
@@ -11,20 +11,23 @@ extension OrderStatusX on OrderStatus {
     OrderStatus.processing => l10n.processing,
     OrderStatus.picked => l10n.picked,
     OrderStatus.delivered => l10n.delivered,
+    OrderStatus.cancelled => l10n.cancelled,
   };
 
   Color get backgroundColor => switch (this) {
-    OrderStatus.pending => const Color(0xFFFFF7D0),
-    OrderStatus.processing => const Color(0xFF9BD4B1),
-    OrderStatus.picked => const Color(0xFFFFD5B6),
-    OrderStatus.delivered => const Color(0xFFD6E9FA),
+    OrderStatus.pending => const Color(0xFFFCE8A6),
+    OrderStatus.processing => const Color(0xFF9FD7B4),
+    OrderStatus.picked => const Color(0xFFFAD0AC),
+    OrderStatus.delivered => const Color(0xFFCFE6FA),
+    OrderStatus.cancelled => const Color(0xFFF6C9C9),
   };
 
   Color get textColor => switch (this) {
-    OrderStatus.pending => const Color(0xFFD4A017),
-    OrderStatus.processing => const Color(0xFF226E3A),
-    OrderStatus.picked => const Color(0xFFD36F1E),
-    OrderStatus.delivered => const Color(0xFF4EA0F2),
+    OrderStatus.pending => const Color(0xFFB8860B),
+    OrderStatus.processing => const Color(0xFF1F7A3D),
+    OrderStatus.picked => const Color(0xFFD2761F),
+    OrderStatus.delivered => const Color(0xFF2E9BE5),
+    OrderStatus.cancelled => const Color(0xFFC0392B),
   };
 }
 
@@ -144,6 +147,8 @@ OrderStatus _mapApiStatus(String? status) {
     'shipped' => OrderStatus.picked,
     'picked' => OrderStatus.picked,
     'delivered' => OrderStatus.delivered,
+    'cancelled' => OrderStatus.cancelled,
+    'canceled' => OrderStatus.cancelled,
     _ => OrderStatus.pending,
   };
 }

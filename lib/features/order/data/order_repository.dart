@@ -48,6 +48,27 @@ final class OrderRepository {
     );
   }
 
+  /// Posts a book review. The backend derives the order from the user's
+  /// purchase history, so only the book id, rating and comment are sent.
+  Future<Result<void>> submitBookReview({
+    required String bookId,
+    required int rating,
+    required String comment,
+  }) async {
+    final result = await _client.post<dynamic>(
+      '/user/write-review',
+      data: {'book': bookId, 'rating': rating, 'comment': comment},
+      parser: (data) {
+        _assertSuccess(data);
+        return null;
+      },
+    );
+    return switch (result) {
+      Success() => const Success(null),
+      ResultFailure(error: final e) => ResultFailure(e),
+    };
+  }
+
   static List<OrderModel> _parseOrderListResponse(dynamic data) {
     _assertSuccess(data);
     final root = data as Map<String, dynamic>;

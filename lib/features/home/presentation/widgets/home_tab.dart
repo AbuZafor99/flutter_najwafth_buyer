@@ -52,7 +52,7 @@ class _HomeTabState extends ConsumerState<HomeTab> {
 
     return SafeArea(
       child: ListView(
-        padding: const EdgeInsets.fromLTRB(12, 8, 12, 16),
+        padding: const EdgeInsets.fromLTRB(12, 22, 12, 16),
         children: [
           Row(
             children: [
@@ -227,7 +227,7 @@ class _HomeTabState extends ConsumerState<HomeTab> {
                                         ? Image.network(
                                             previewUrl,
                                             fit: BoxFit.cover,
-                                            errorBuilder: (_, __, ___) =>
+                                            errorBuilder: (_, _, _) =>
                                                 const Icon(
                                                   Icons.menu_book_outlined,
                                                   color: Color(0xFF9CA6B3),
@@ -242,7 +242,7 @@ class _HomeTabState extends ConsumerState<HomeTab> {
                                         : Image.asset(
                                             previewPath,
                                             fit: BoxFit.cover,
-                                            errorBuilder: (_, __, ___) =>
+                                            errorBuilder: (_, _, _) =>
                                                 const Icon(
                                                   Icons.menu_book_outlined,
                                                   color: Color(0xFF9CA6B3),

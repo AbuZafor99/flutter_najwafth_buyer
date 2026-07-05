@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/errors/result.dart';
 import '../../../core/network/network_providers.dart';
+import '../../../core/notifications/push_notification_service.dart';
 import '../../../core/storage/key_value_storage.dart';
 import '../../../core/storage/storage_providers.dart';
 
@@ -160,6 +163,13 @@ final class AuthController extends Notifier<AuthState> {
       return sanitized;
     }
 
+    if (initial.isAuthenticated) {
+      // Returning user with a stored session — register for push on launch.
+      Future<void>.microtask(
+        () => ref.read(pushNotificationServiceProvider).start(),
+      );
+    }
+
     _log('init', initial);
     return initial;
   }
@@ -229,6 +239,10 @@ final class AuthController extends Notifier<AuthState> {
     );
 
     await _persistSession(rememberMe: rememberMe);
+
+    // Register this device for push now that we have a valid session.
+    unawaited(ref.read(pushNotificationServiceProvider).start());
+
     _log('signIn:done', state);
   }
 
@@ -436,6 +450,13 @@ final class AuthController extends Notifier<AuthState> {
   Future<void> logout() async {
     _logStep('logout:start');
 
+    // Drop this device's push token while we still hold a valid session.
+    try {
+      await ref.read(pushNotificationServiceProvider).unregister();
+    } catch (e) {
+      _logStep('logout:push-unregister-failed $e');
+    }
+
     if (state.accessToken != null && state.accessToken!.isNotEmpty) {
       await ref.read(apiClientProvider).post<dynamic>(
             '/auth/logout',
@@ -565,14 +586,19 @@ Map<String, dynamic> _unwrap(Result<Map<String, dynamic>> result) {
     Success(data: final data) => data,
     ResultFailure(error: final error) => throw AuthFlowException(
         error.message,
+        isNetworkError: error.isNetworkError,
       ),
   };
 }
 
 final class AuthFlowException implements Exception {
-  const AuthFlowException(this.message);
+  const AuthFlowException(this.message, {this.isNetworkError = false});
 
   final String message;
+
+  /// True when the failure was caused by the device being offline / unable to
+  /// reach the server, as opposed to a validation or backend error.
+  final bool isNetworkError;
 
   @override
   String toString() => message;

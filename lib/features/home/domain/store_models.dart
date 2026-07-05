@@ -115,7 +115,13 @@ final class BookItem {
       shopName = shop['name']?.toString();
     }
 
-    final coverImage = json['coverImage']?.toString();
+    var coverImage = json['coverImage']?.toString();
+    if (coverImage == null || coverImage.isEmpty) {
+      final photos = json['photos'];
+      if (photos is List && photos.isNotEmpty) {
+        coverImage = photos.first?.toString();
+      }
+    }
 
     final rawId = (json['_id'] ?? json['id'])?.toString() ?? '';
     final rawStock = json['stock'];

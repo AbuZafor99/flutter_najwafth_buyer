@@ -93,7 +93,7 @@ class FeaturedPage extends StatelessWidget {
                                 ? Image.network(
                                     category.previewImageUrl!,
                                     fit: BoxFit.cover,
-                                    errorBuilder: (_, __, ___) => const Icon(
+                                    errorBuilder: (_, _, _) => const Icon(
                                       Icons.menu_book_outlined,
                                       color: Color(0xFF9CA6B3),
                                     ),
@@ -107,7 +107,7 @@ class FeaturedPage extends StatelessWidget {
                                 : Image.asset(
                                     category.previewImageAsset!,
                                     fit: BoxFit.cover,
-                                    errorBuilder: (_, __, ___) => const Icon(
+                                    errorBuilder: (_, _, _) => const Icon(
                                       Icons.menu_book_outlined,
                                       color: Color(0xFF9CA6B3),
                                     ),

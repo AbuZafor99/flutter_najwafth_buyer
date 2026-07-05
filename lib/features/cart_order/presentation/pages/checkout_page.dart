@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/errors/result.dart';
+import '../../../../core/widgets/top_toast.dart';
 import '../../../home/application/store_controller.dart';
 import '../../../home/domain/store_models.dart';
 import '../../../order/application/order_controller.dart';
@@ -305,9 +306,7 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
     final l10n = AppLocalizations.of(context);
     final storeState = ref.read(storeControllerProvider);
     if (storeState.cartQuantities.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(l10n.cartIsEmpty)));
+      showTopToast(context, title: l10n.cartIsEmpty, type: ToastType.info);
       return;
     }
 
@@ -333,9 +332,7 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
       case Success():
         ref.read(storeControllerProvider.notifier).clearCart();
       case ResultFailure(error: final e):
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(e.message)));
+        showTopToast(context, title: e.message, type: ToastType.error);
         return;
     }
 

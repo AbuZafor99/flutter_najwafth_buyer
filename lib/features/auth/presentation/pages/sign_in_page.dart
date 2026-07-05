@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/utils/validators.dart';
+import '../../../../core/widgets/top_toast.dart';
 import '../../application/auth_controller.dart';
 import '../auth_routes.dart';
 import '../widgets/auth_scaffold.dart';
@@ -37,6 +38,7 @@ class _SignInPageState extends ConsumerState<SignInPage> {
       return;
     }
 
+    final l10n = AppLocalizations.of(context);
     setState(() => _isSubmitting = true);
     try {
       await ref
@@ -53,7 +55,9 @@ class _SignInPageState extends ConsumerState<SignInPage> {
 
       Navigator.of(context).pushReplacementNamed(AuthRoutes.home);
     } on AuthFlowException catch (error) {
-      _showMessage(error.message);
+      _showMessage(error.isNetworkError ? l10n.noInternetConnection : error.message);
+    } catch (_) {
+      _showMessage(l10n.somethingWentWrong);
     } finally {
       if (mounted) {
         setState(() => _isSubmitting = false);
@@ -61,10 +65,8 @@ class _SignInPageState extends ConsumerState<SignInPage> {
     }
   }
 
-  void _showMessage(String message) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(message)));
+  void _showMessage(String message, {ToastType type = ToastType.error}) {
+    showTopToast(context, title: message, type: type);
   }
 
   @override
@@ -92,13 +94,12 @@ class _SignInPageState extends ConsumerState<SignInPage> {
               controller: _passwordController,
               hintText: l10n.enterYourPassword,
               obscureText: _obscurePassword,
-              validator: (value) =>
-                  Validators.minLength(
-                    value,
-                    8,
-                    label: l10n.password,
-                    l10n: l10n,
-                  ),
+              validator: (value) => Validators.minLength(
+                value,
+                8,
+                label: l10n.password,
+                l10n: l10n,
+              ),
               prefixIcon: const Icon(Icons.lock_outline_rounded),
               suffixIcon: GestureDetector(
                 onTap: () {
@@ -130,18 +131,30 @@ class _SignInPageState extends ConsumerState<SignInPage> {
                   ),
                 ),
                 const SizedBox(width: 12),
-                Text(
-                  l10n.rememberMe,
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: const Color(0xFF808080),
+                Expanded(
+                  child: Text(
+                    l10n.rememberMe,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      color: const Color(0xFF808080),
+                    ),
                   ),
                 ),
-                const Spacer(),
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pushNamed(AuthRoutes.forgotPassword);
-                  },
-                  child: Text(l10n.forgotPassword),
+                const SizedBox(width: 8),
+                Flexible(
+                  child: TextButton(
+                    onPressed: () {
+                      Navigator.of(
+                        context,
+                      ).pushNamed(AuthRoutes.forgotPassword);
+                    },
+                    child: Text(
+                      l10n.forgotPassword,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -167,7 +180,7 @@ class _SignInPageState extends ConsumerState<SignInPage> {
               iconColor: const Color(0xFFEA4335),
               label: l10n.continueWithGoogle,
               onPressed: () {
-                _showMessage(l10n.googleNotConfigured);
+                _showMessage(l10n.googleNotConfigured, type: ToastType.info);
               },
             ),
             const SizedBox(height: 12),
@@ -176,7 +189,7 @@ class _SignInPageState extends ConsumerState<SignInPage> {
               iconColor: const Color(0xFF1877F2),
               label: l10n.continueWithFacebook,
               onPressed: () {
-                _showMessage(l10n.facebookNotConfigured);
+                _showMessage(l10n.facebookNotConfigured, type: ToastType.info);
               },
             ),
             const SizedBox(height: 16),
