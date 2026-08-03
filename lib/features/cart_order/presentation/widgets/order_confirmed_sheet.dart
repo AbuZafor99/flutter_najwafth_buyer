@@ -130,6 +130,32 @@ class OrderConfirmedSheet extends StatelessWidget {
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF6772E5)),
             ),
           ),
+          const SizedBox(height: 16),
+          // Review-after-delivery hint
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF3F8FC),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.rate_review_outlined, size: 18, color: Color(0xFF5A91C4)),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    l10n.reviewAfterDelivery,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF56606B),
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
           const SizedBox(height: 24),
           // Back to home button
           SizedBox(

@@ -1,28 +1,17 @@
-
+import 'dart:developer' as dev_console show log;
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../features/notification/application/notification_provider.dart';
-import 'dart:developer' as dev_console show log;
 
-/// Background isolate handler. Must be a top-level function annotated with
-/// `@pragma('vm:entry-point')`. When a data/notification message arrives while
-/// the app is terminated or backgrounded, the OS shows it in the system tray
-/// automatically; this handler just exists so FCM can wake the isolate.
 @pragma('vm:entry-point')
-Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  // No-op: notification messages are rendered by the OS tray. We intentionally
-  // avoid extra work here to keep the background isolate lightweight.
-}
+Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {}
 
 final pushNotificationServiceProvider = Provider<PushNotificationService>((ref) {
   return PushNotificationService(ref);
 });
 
-/// Owns the FCM lifecycle: permission, token registration with the backend,
-/// token refresh, and refreshing the in-app notification list when a push
-/// arrives while the app is in the foreground.
 class PushNotificationService {
   PushNotificationService(this._ref);
 
@@ -48,9 +37,6 @@ class PushNotificationService {
         badge: true,
         sound: true,
       );
-
-      // iOS needs the APNS token before the FCM token is available.
-      await messaging.getAPNSToken();
 
       await _registerCurrentToken();
 
@@ -78,13 +64,19 @@ class PushNotificationService {
 
   Future<void> _registerCurrentToken() async {
     try {
+      final canFetchToken = await _canFetchFirebaseToken();
+      if (!canFetchToken) {
+        return;
+      }
+
       final token = await FirebaseMessaging.instance.getToken();
+
       if (token == null || token.isEmpty) return;
+      debugPrint('[push] token: ${_maskToken(token)}');
       _currentToken = token;
       await _safeRegister(token);
     } catch (e) {
       dev_console.log('[push] token fetch failed: $e');
-      
     }
   }
 
@@ -103,9 +95,38 @@ class PushNotificationService {
 
   Future<String?> _safeGetToken() async {
     try {
-      return await FirebaseMessaging.instance.getToken();
+      final canFetchToken = await _canFetchFirebaseToken();
+      if (!canFetchToken) {
+        return null;
+      }
+
+      final token = _currentToken ?? await FirebaseMessaging.instance.getToken();
+      debugPrint('[push] token: ${token == null ? null : _maskToken(token)}');
+      return token;
     } catch (_) {
       return null;
     }
+  }
+
+  Future<bool> _canFetchFirebaseToken() async {
+    if (defaultTargetPlatform != TargetPlatform.iOS &&
+        defaultTargetPlatform != TargetPlatform.macOS) {
+      return true;
+    }
+
+    final apnsToken = await FirebaseMessaging.instance.getAPNSToken();
+    if (apnsToken == null || apnsToken.isEmpty) {
+      dev_console.log('[push] APNS token not ready; skipping FCM registration');
+      return false;
+    }
+
+    return true;
+  }
+
+  String _maskToken(String token) {
+    if (token.length <= 12) {
+      return '***';
+    }
+    return '${token.substring(0, 6)}...${token.substring(token.length - 6)}';
   }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/localization/app_localizations.dart';
 import '../../domain/store_models.dart';
 
 final _currencyFormatter = NumberFormat.currency(
@@ -9,6 +10,55 @@ final _currencyFormatter = NumberFormat.currency(
 );
 
 String formatPrice(double value) => _currencyFormatter.format(value);
+
+/// Small availability pill shown on book cards: a soft green "In Stock" or
+/// a soft red "Stock Out", with a matching status dot.
+class StockBadge extends StatelessWidget {
+  const StockBadge({super.key, required this.inStock, this.compact = false});
+
+  final bool inStock;
+
+  /// Slightly smaller variant for tight card layouts.
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final color = inStock ? const Color(0xFF1E9E4A) : const Color(0xFFE5484D);
+    final background =
+        inStock ? const Color(0xFFE7F6EC) : const Color(0xFFFDECEC);
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: compact ? 6 : 8,
+        vertical: compact ? 2 : 3,
+      ),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(100),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 6,
+            height: 6,
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+          ),
+          const SizedBox(width: 4),
+          Text(
+            inStock ? l10n.inStock : l10n.stockOut,
+            style: TextStyle(
+              fontSize: compact ? 9.5 : 10.5,
+              fontWeight: FontWeight.w700,
+              color: color,
+              letterSpacing: 0.2,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
 
 class StorePageScaffold extends StatelessWidget {
   const StorePageScaffold({

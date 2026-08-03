@@ -95,13 +95,15 @@ final class ProfileController extends AsyncNotifier<ProfileState> {
       throw const AuthFlowException('Please sign in again.');
     }
 
+    // gender/dob/age are typed on the backend (enum/Date/Number), so empty
+    // values are omitted instead of sent as empty strings.
     final fields = <String, dynamic>{
       'name': name.trim(),
       'phone': phone.trim(),
       'bio': bio.trim(),
-      'gender': gender.trim(),
-      'dob': dob.trim(),
-      'age': age.trim(),
+      if (gender.trim().isNotEmpty) 'gender': gender.trim(),
+      if (dob.trim().isNotEmpty) 'dob': dob.trim(),
+      if (age.trim().isNotEmpty) 'age': age.trim(),
       'address': address.trim(),
     };
 

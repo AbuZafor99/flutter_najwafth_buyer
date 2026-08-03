@@ -5,10 +5,15 @@ import '../../../core/errors/result.dart';
 import '../../../core/network/network_providers.dart';
 import '../../home/domain/store_models.dart';
 import '../data/order_repository.dart';
+import '../data/payment_repository.dart';
 import '../domain/order_models.dart';
 
 final orderRepositoryProvider = Provider<OrderRepository>((ref) {
   return OrderRepository(ref.watch(apiClientProvider));
+});
+
+final paymentRepositoryProvider = Provider<PaymentRepository>((ref) {
+  return PaymentRepository(ref.watch(apiClientProvider));
 });
 
 final orderControllerProvider =
@@ -48,7 +53,13 @@ class OrderController extends AsyncNotifier<List<OrderModel>> {
     final address = '${input.address}, ${input.city}';
     final result = await ref
         .read(orderRepositoryProvider)
-        .createOrder(items: items, address: address);
+        .createOrder(
+          items: items,
+          address: address,
+          name: input.name,
+          phone: input.phone,
+          addressDetails: input.addressDetails,
+        );
 
     switch (result) {
       case Success(data: final created):

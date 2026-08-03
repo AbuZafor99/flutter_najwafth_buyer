@@ -57,6 +57,8 @@ class FeaturedBookCard extends ConsumerWidget {
                     color: Color(0xFF6E7784),
                   ),
                 ),
+                const Spacer(),
+                StockBadge(inStock: book.stock, compact: true),
               ],
             ),
             Text(
@@ -82,13 +84,17 @@ class FeaturedBookCard extends ConsumerWidget {
                 const SizedBox(width: 4),
                 const Spacer(),
                 GestureDetector(
-                  onTap: () => ref
-                      .read(storeControllerProvider.notifier)
-                      .addToCart(book),
-                  child: const CircleAvatar(
+                  onTap: book.stock
+                      ? () => ref
+                            .read(storeControllerProvider.notifier)
+                            .addToCart(book)
+                      : null,
+                  child: CircleAvatar(
                     radius: 13,
-                    backgroundColor: Color(0xFF5A91C4),
-                    child: Icon(Icons.add, color: Colors.white, size: 16),
+                    backgroundColor: book.stock
+                        ? const Color(0xFF5A91C4)
+                        : const Color(0xFFC5CDD6),
+                    child: const Icon(Icons.add, color: Colors.white, size: 16),
                   ),
                 ),
               ],

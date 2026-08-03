@@ -7,6 +7,5 @@ Future<void> main() async {
   final app = await AppBootstrap.createProviderScope(
     child: const NajwafthBuyerApp(),
   );
-
   runApp(app);
 }

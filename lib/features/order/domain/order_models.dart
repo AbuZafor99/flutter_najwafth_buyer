@@ -33,6 +33,7 @@ extension OrderStatusX on OrderStatus {
 
 final class OrderModel {
   const OrderModel({
+    this.id = '',
     required this.orderNumber,
     required this.customerName,
     required this.address,
@@ -44,6 +45,9 @@ final class OrderModel {
     required this.status,
     required this.createdAt,
   });
+
+  /// Backend database id (`_id`), required for payment API calls.
+  final String id;
 
   final String orderNumber;
   final String customerName;
@@ -60,6 +64,7 @@ final class OrderModel {
 
   OrderModel copyWith({OrderStatus? status}) {
     return OrderModel(
+      id: id,
       orderNumber: orderNumber,
       customerName: customerName,
       address: address,
@@ -118,15 +123,31 @@ final class OrderModel {
     }
 
     final totalAmount = (json['totalAmount'] as num?)?.toDouble() ?? subtotal;
-    final deliveryFee = totalAmount > subtotal ? (totalAmount - subtotal) : 0.0;
+    // The backend stores the delivery charge in a dedicated `shippingFee`
+    // field (see order.controller.createOrder). Prefer it; fall back to any
+    // gap between totalAmount and the item subtotal for legacy orders.
+    final shippingFee = (json['shippingFee'] as num?)?.toDouble();
+    final deliveryFee =
+        shippingFee ?? (totalAmount > subtotal ? (totalAmount - subtotal) : 0.0);
     final createdAtRaw = json['createdAt']?.toString();
     final addressRaw = json['address'];
+    final details = json['addressDetails'];
+
+    // Prefer the structured fields the app now stores; fall back to legacy
+    // orders that only carried a customer populate / address string.
+    final recipientName = json['recipientName']?.toString();
+    final topLevelPhone = json['phone']?.toString();
 
     return OrderModel(
+      id: json['_id']?.toString() ?? '',
       orderNumber: json['orderId']?.toString() ?? '',
-      customerName: _readCustomerName(json['customer']),
-      address: _readAddress(addressRaw),
-      phone: _readPhone(addressRaw),
+      customerName: (recipientName != null && recipientName.trim().isNotEmpty)
+          ? recipientName.trim()
+          : _readCustomerName(json['customer']),
+      address: _readAddress(details) ?? _readAddress(addressRaw) ?? 'N/A',
+      phone: (topLevelPhone != null && topLevelPhone.trim().isNotEmpty)
+          ? topLevelPhone.trim()
+          : _readPhone(addressRaw),
       items: expandedItems,
       subtotal: subtotal,
       deliveryFee: deliveryFee,
@@ -161,20 +182,34 @@ String _readCustomerName(dynamic customer) {
   return 'Customer';
 }
 
-String _readAddress(dynamic address) {
-  if (address is String && address.trim().isNotEmpty) return address.trim();
+/// Builds a readable address from either the structured `addressDetails`
+/// object, a legacy map, or a plain string. Returns null when nothing usable
+/// is present so callers can fall back.
+String? _readAddress(dynamic address) {
+  if (address is String) {
+    final trimmed = address.trim();
+    return trimmed.isEmpty ? null : trimmed;
+  }
   if (address is Map<String, dynamic>) {
-    final line = address['line']?.toString();
-    final city = address['city']?.toString();
-    final area = address['area']?.toString();
-    final raw = [line, area, city]
+    final parts = [
+      address['line1'] ?? address['line'],
+      address['line2'],
+      [address['postalCode'], address['city'] ?? address['area']]
+          .whereType<String>()
+          .map((e) => e.trim())
+          .where((e) => e.isNotEmpty)
+          .join(' '),
+      address['state'],
+      address['country'],
+    ];
+    final raw = parts
         .whereType<String>()
         .map((e) => e.trim())
         .where((e) => e.isNotEmpty)
         .join(', ');
-    if (raw.isNotEmpty) return raw;
+    return raw.isEmpty ? null : raw;
   }
-  return 'N/A';
+  return null;
 }
 
 String _readPhone(dynamic address) {

@@ -14,6 +14,16 @@ class BookCardMini extends ConsumerWidget {
   final VoidCallback onTap;
 
   void _addToCart(BuildContext context, WidgetRef ref) {
+    if (!book.stock) {
+      showTopToast(
+        context,
+        type: ToastType.info,
+        icon: Icons.inventory_2_outlined,
+        title: context.l10n.outOfStock,
+        subtitle: book.title,
+      );
+      return;
+    }
     ref.read(storeControllerProvider.notifier).addToCart(book);
     showTopToast(
       context,
@@ -23,7 +33,7 @@ class BookCardMini extends ConsumerWidget {
       subtitle: book.title,
     );
   }
-
+  
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return GestureDetector(
@@ -56,14 +66,16 @@ class BookCardMini extends ConsumerWidget {
                 const Icon(Icons.star, color: Color(0xFFFFC83A), size: 18),
                 const SizedBox(width: 2),
                 Text(book.rating.toStringAsFixed(1), style: const TextStyle(fontSize: 14, color: Color(0xFF6E7784))),
+                const Spacer(),
+                StockBadge(inStock: book.stock, compact: true),
               ],
             ),
             Row(
               children: [
-                const Icon(Icons.location_on_outlined, color: Color(0xFF5A91C4), size: 18),
+                const Icon(Icons.history_edu, color: Color(0xFF5A91C4), size: 20),
                 const SizedBox(width: 6),
                 Expanded(
-                  child: Text(book.author, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12, color: Color(0xFFAFB7C1))),
+                  child: Text(book.placeName, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12, color: Color(0xFFAFB7C1))),
                 ),
               ],
             ),
@@ -79,12 +91,14 @@ class BookCardMini extends ConsumerWidget {
                 ),
                 const SizedBox(width: 4),
                 const Spacer(),
-                GestureDetector(
+                InkWell(
                   onTap: () => _addToCart(context, ref),
-                  child: const CircleAvatar(
+                  child: CircleAvatar(
                     radius: 14,
-                    backgroundColor: Color(0xFF5A91C4),
-                    child: Icon(Icons.add, color: Colors.white, size: 24),
+                    backgroundColor: book.stock
+                        ? const Color(0xFF5A91C4)
+                        : const Color(0xFFC5CDD6),
+                    child: const Icon(Icons.add, color: Colors.white, size: 24),
                   ),
                 ),
               ],
