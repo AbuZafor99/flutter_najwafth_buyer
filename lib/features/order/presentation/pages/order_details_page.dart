@@ -94,6 +94,18 @@ class OrderDetailsPage extends ConsumerWidget {
         .where((id) => id.isNotEmpty)
         .toSet();
 
+    // Nothing reviewable (e.g. the ordered product was removed) — don't claim
+    // a review was submitted when no request was ever made.
+    if (bookIds.isEmpty) {
+      showTopToast(
+        null,
+        overlay: overlay,
+        title: l10n.reviewFailed,
+        type: ToastType.error,
+      );
+      return;
+    }
+
     String? errorMessage;
     var submitted = false;
     for (final bookId in bookIds) {
@@ -113,65 +125,69 @@ class OrderDetailsPage extends ConsumerWidget {
     showTopToast(
       null,
       overlay: overlay,
-      title: submitted ? l10n.reviewSubmitted : (errorMessage ?? l10n.reviewSubmitted),
+      title: submitted ? l10n.reviewSubmitted : (errorMessage ?? l10n.reviewFailed),
       type: submitted ? ToastType.success : ToastType.error,
     );
   }
 
   Widget _buildDeliveryAndContact(BuildContext context) {
-    final dateStr = '${order.createdAt.day}/${order.createdAt.month}/${order.createdAt.year}';
+    final l10n = AppLocalizations.of(context);
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    ];
+    final dateStr =
+        '${order.createdAt.day} ${months[order.createdAt.month - 1]} ${order.createdAt.year}';
     return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: _cardDecoration(),
-      child: Row(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFFF3FAFF), Colors.white],
+        ),
+        border: Border.all(color: const Color(0xFFE4F1FB)),
+        boxShadow: [
+          BoxShadow(
+            color: _accentBlue.withValues(alpha: 0.10),
+            blurRadius: 18,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    const Icon(Icons.location_on_outlined, size: 16, color: _accentBlue),
-                    const SizedBox(width: 6),
-                    Text(
-                      AppLocalizations.of(context).deliveryAddress,
-                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF243041)),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  order.address,
-                  style: const TextStyle(fontSize: 12, color: Color(0xFF8E98A5), height: 1.5),
-                ),
-              ],
+          _buildSectionHeader(Icons.location_on_outlined, l10n.deliveryAddress),
+          const SizedBox(height: 10),
+          Padding(
+            padding: const EdgeInsets.only(left: 46),
+            child: Text(
+              order.address,
+              style: const TextStyle(
+                fontSize: 13,
+                color: Color(0xFF5A6675),
+                height: 1.5,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ),
-          Container(width: 1, height: 60, color: const Color(0xFFE8EBF0), margin: const EdgeInsets.symmetric(horizontal: 12)),
-          Expanded(
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 16),
+            child: Divider(color: Color(0xFFE4F1FB), height: 1),
+          ),
+          _buildSectionHeader(Icons.phone_in_talk_outlined, l10n.contactInformation),
+          const SizedBox(height: 12),
+          Padding(
+            padding: const EdgeInsets.only(left: 46),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    const Icon(Icons.phone_in_talk_outlined, size: 16, color: _accentBlue),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: Text(
-                        AppLocalizations.of(context).contactInformation,
-                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF243041)),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
+                _buildInfoRow(l10n.orderDate, dateStr),
                 const SizedBox(height: 8),
-                _buildInfoRow(AppLocalizations.of(context).orderDate, dateStr),
-                const SizedBox(height: 4),
-                _buildInfoRow(AppLocalizations.of(context).phone, order.phone),
-                const SizedBox(height: 4),
-                _buildInfoRow(AppLocalizations.of(context).orderId, order.orderNumber),
+                _buildInfoRow(l10n.phone, order.phone),
+                const SizedBox(height: 8),
+                _buildInfoRow(l10n.orderId, order.orderNumber),
               ],
             ),
           ),
@@ -180,19 +196,49 @@ class OrderDetailsPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildInfoRow(String label, String value) {
+  Widget _buildSectionHeader(IconData icon, String title) {
     return Row(
       children: [
-        Text(
-          label,
-          style: const TextStyle(fontSize: 11, color: Color(0xFF8E98A5)),
+        Container(
+          width: 34,
+          height: 34,
+          decoration: BoxDecoration(
+            color: _accentBlue.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(icon, size: 18, color: _accentBlue),
         ),
-        const SizedBox(width: 4),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            title,
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF243041),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildInfoRow(String label, String value) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 78,
+          child: Text(
+            label,
+            style: const TextStyle(fontSize: 12, color: Color(0xFF8E98A5)),
+          ),
+        ),
+        const SizedBox(width: 8),
         Expanded(
           child: Text(
             value,
-            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF243041)),
-            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF243041)),
           ),
         ),
       ],
@@ -380,8 +426,6 @@ class OrderDetailsPage extends ConsumerWidget {
                                   ),
                                 ],
                               ),
-                              const SizedBox(width: 8),
-                              const Icon(Icons.chevron_right, size: 18, color: _accentBlue),
                             ],
                           ),
                         ],
@@ -389,7 +433,8 @@ class OrderDetailsPage extends ConsumerWidget {
                     ),
                   ],
                 ),
-              )),
+              ),
+            ),
         ],
       ),
     );

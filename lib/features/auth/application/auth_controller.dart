@@ -82,8 +82,7 @@ final class AuthState {
       return 0;
     }
 
-    final remaining =
-        60 - DateTime.now().difference(otpRequestedAt!).inSeconds;
+    final remaining = 60 - DateTime.now().difference(otpRequestedAt!).inSeconds;
     return remaining > 0 ? remaining : 0;
   }
 
@@ -191,7 +190,9 @@ final class AuthController extends Notifier<AuthState> {
     final normalizedEmail = email.trim().toLowerCase();
     _logStep('signIn:start email=$normalizedEmail');
 
-    final result = await ref.read(apiClientProvider).post<Map<String, dynamic>>(
+    final result = await ref
+        .read(apiClientProvider)
+        .post<Map<String, dynamic>>(
           '/auth/login',
           data: {'email': normalizedEmail, 'password': password},
           parser: _extractDataMap,
@@ -204,9 +205,7 @@ final class AuthController extends Notifier<AuthState> {
     final user = data['user'];
     final userMap = user is Map<String, dynamic> ? user : <String, dynamic>{};
 
-    final name = (userMap['name'] ??
-            userMap['fullName'] ??
-            state.fullName)
+    final name = (userMap['name'] ?? userMap['fullName'] ?? state.fullName)
         .toString();
 
     final role = (data['role'] ?? userMap['role'] ?? '').toString();
@@ -214,9 +213,7 @@ final class AuthController extends Notifier<AuthState> {
 
     if (accessToken.isEmpty || refreshToken.isEmpty) {
       _logStep('signIn:error missing tokens in response');
-      throw const AuthFlowException(
-        'Authentication failed. Please try again.',
-      );
+      throw const AuthFlowException('Authentication failed. Please try again.');
     }
 
     if (role.isNotEmpty && role != _appRole) {
@@ -270,7 +267,9 @@ final class AuthController extends Notifier<AuthState> {
       'role': _appRole,
     };
 
-    final result = await ref.read(apiClientProvider).post<Map<String, dynamic>>(
+    final result = await ref
+        .read(apiClientProvider)
+        .post<Map<String, dynamic>>(
           '/auth/register',
           data: payload,
           parser: _extractDataMap,
@@ -311,7 +310,9 @@ final class AuthController extends Notifier<AuthState> {
     final normalizedEmail = email.trim().toLowerCase();
     _logStep('requestOtp:start email=$normalizedEmail');
 
-    final result = await ref.read(apiClientProvider).post<Map<String, dynamic>>(
+    final result = await ref
+        .read(apiClientProvider)
+        .post<Map<String, dynamic>>(
           '/auth/forgot-password',
           data: {'email': normalizedEmail},
           parser: _extractDataMap,
@@ -370,7 +371,9 @@ final class AuthController extends Notifier<AuthState> {
       throw const AuthFlowException('Start the password reset flow again.');
     }
 
-    final result = await ref.read(apiClientProvider).post<Map<String, dynamic>>(
+    final result = await ref
+        .read(apiClientProvider)
+        .post<Map<String, dynamic>>(
           '/auth/verify-otp',
           data: {'email': state.pendingResetEmail, 'otp': enteredOtp},
           parser: _extractDataMap,
@@ -378,10 +381,7 @@ final class AuthController extends Notifier<AuthState> {
 
     _unwrap(result);
 
-    state = state.copyWith(
-      otpVerified: true,
-      verifiedResetOtp: enteredOtp,
-    );
+    state = state.copyWith(otpVerified: true, verifiedResetOtp: enteredOtp);
 
     await _storage!.writeBool(_AuthStorageKeys.otpVerified, true);
     await _storage!.writeString(_AuthStorageKeys.verifiedResetOtp, enteredOtp);
@@ -409,7 +409,9 @@ final class AuthController extends Notifier<AuthState> {
       throw const AuthFlowException('Passwords do not match.');
     }
 
-    final result = await ref.read(apiClientProvider).post<Map<String, dynamic>>(
+    final result = await ref
+        .read(apiClientProvider)
+        .post<Map<String, dynamic>>(
           '/auth/reset-password',
           data: {
             'email': state.pendingResetEmail,
@@ -458,7 +460,9 @@ final class AuthController extends Notifier<AuthState> {
     }
 
     if (state.accessToken != null && state.accessToken!.isNotEmpty) {
-      await ref.read(apiClientProvider).post<dynamic>(
+      await ref
+          .read(apiClientProvider)
+          .post<dynamic>(
             '/auth/logout',
             options: Options(
               headers: {'Authorization': 'Bearer ${state.accessToken!}'},
@@ -468,6 +472,12 @@ final class AuthController extends Notifier<AuthState> {
 
     await _clearSession();
     _log('logout:done', state);
+  }
+
+  Future<void> expireSession() async {
+    _logStep('expireSession:start');
+    await _clearSession();
+    _log('expireSession:done', state);
   }
 
   Future<void> updateProfileBasics({
@@ -517,10 +527,7 @@ final class AuthController extends Notifier<AuthState> {
   }
 
   Future<void> _clearSession() async {
-    state = state.copyWith(
-      isAuthenticated: false,
-      clearTokens: true,
-    );
+    state = state.copyWith(isAuthenticated: false, clearTokens: true);
 
     await _storage!.writeBool(_AuthStorageKeys.isAuthenticated, false);
     await _storage!.remove(_AuthStorageKeys.accessToken);
@@ -568,8 +575,8 @@ Map<String, dynamic> _extractDataMap(dynamic raw) {
   }
 
   if (raw['success'] == false) {
-    final message =
-        (raw['message'] ?? 'Request could not be completed.').toString();
+    final message = (raw['message'] ?? 'Request could not be completed.')
+        .toString();
     throw AuthFlowException(message);
   }
 
@@ -585,9 +592,9 @@ Map<String, dynamic> _unwrap(Result<Map<String, dynamic>> result) {
   return switch (result) {
     Success(data: final data) => data,
     ResultFailure(error: final error) => throw AuthFlowException(
-        error.message,
-        isNetworkError: error.isNetworkError,
-      ),
+      error.message,
+      isNetworkError: error.isNetworkError,
+    ),
   };
 }
 

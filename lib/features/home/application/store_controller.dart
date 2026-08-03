@@ -175,6 +175,9 @@ final class StoreController extends Notifier<StoreState> {
     );
   }
 
+  /// Flat delivery fee applied once per order. The authoritative value comes
+  /// from the backend admin settings ([deliveryFeeProvider]); this constant is
+  /// only a fallback for the legacy in-memory receipt path.
   double deliveryFee(List<BookItem> books) {
     return books.isEmpty ? 0 : _deliveryFee;
   }

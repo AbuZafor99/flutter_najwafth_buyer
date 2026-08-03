@@ -76,6 +76,37 @@ Color _parseCategoryColor(dynamic input) {
   return value == null ? fallback : Color(value);
 }
 
+/// A single review left on a book, as returned by `GET /book/:id`.
+final class BookReview {
+  const BookReview({
+    required this.id,
+    required this.userName,
+    required this.rating,
+    required this.comment,
+    this.createdAt,
+  });
+
+  final String id;
+  final String userName;
+  final int rating;
+  final String comment;
+  final DateTime? createdAt;
+
+  factory BookReview.fromJson(Map<String, dynamic> json) {
+    final user = json['user'];
+    final userName = user is Map<String, dynamic>
+        ? (user['name']?.toString() ?? '')
+        : '';
+    return BookReview(
+      id: (json['_id'] ?? json['id'])?.toString() ?? '',
+      userName: userName,
+      rating: (json['rating'] as num?)?.toInt() ?? 0,
+      comment: json['comment']?.toString() ?? '',
+      createdAt: DateTime.tryParse(json['createdAt']?.toString() ?? ''),
+    );
+  }
+}
+
 final class BookItem {
   const BookItem({
     required this.id,
@@ -86,6 +117,7 @@ final class BookItem {
     required this.price,
     this.rating = 0.0,
     this.reviewCount = 0,
+    this.reviews = const [],
     this.description = '',
     this.categoryId = '',
     this.categoryName = '',
@@ -93,6 +125,7 @@ final class BookItem {
     this.coverAccent = const Color(0xFFE8F0FE),
     this.stock = true,
     this.shopName,
+    this.shopAddress,
     this.isFeatured = false,
     this.isPopular = false,
   });
@@ -111,8 +144,13 @@ final class BookItem {
     }
 
     String? shopName;
+    String? shopAddress;
     if (shop is Map<String, dynamic>) {
       shopName = shop['name']?.toString();
+      final rawAddress = shop['address']?.toString().trim();
+      if (rawAddress != null && rawAddress.isNotEmpty) {
+        shopAddress = rawAddress;
+      }
     }
 
     var coverImage = json['coverImage']?.toString();
@@ -122,6 +160,11 @@ final class BookItem {
         coverImage = photos.first?.toString();
       }
     }
+
+    final reviews = (json['reviews'] as List<dynamic>? ?? const [])
+        .whereType<Map<String, dynamic>>()
+        .map(BookReview.fromJson)
+        .toList(growable: false);
 
     final rawId = (json['_id'] ?? json['id'])?.toString() ?? '';
     final rawStock = json['stock'];
@@ -142,11 +185,15 @@ final class BookItem {
           ? coverImage
           : null,
       price: (json['price'] as num?)?.toDouble() ?? 0.0,
+      rating: (json['avgRating'] as num?)?.toDouble() ?? 0.0,
+      reviewCount: reviews.length,
+      reviews: reviews,
       description: json['description']?.toString() ?? '',
       categoryId: categoryId,
       categoryName: categoryName,
       stock: inStock,
       shopName: shopName,
+      shopAddress: shopAddress,
       isPopular: true,
     );
   }
@@ -159,6 +206,7 @@ final class BookItem {
   final double price;
   final double rating;
   final int reviewCount;
+  final List<BookReview> reviews;
   final String description;
   final String categoryId;
   final String categoryName;
@@ -166,6 +214,18 @@ final class BookItem {
   final Color coverAccent;
   final bool stock;
   final String? shopName;
+  final String? shopAddress;
+
+  /// Label shown next to the location pin on product cards: the seller's
+  /// address when available, then the shop name, then the author so the
+  /// row is never blank while sellers haven't filled in their address.
+  String get placeName {
+    final address = shopAddress;
+    if (address != null && address.isNotEmpty) return address;
+    final name = shopName;
+    if (name != null && name.isNotEmpty) return name;
+    return author;
+  }
   final bool isFeatured;
   final bool isPopular;
 }
@@ -177,6 +237,12 @@ final class CheckoutInput {
     required this.city,
     required this.phone,
     required this.paymentMethod,
+    this.line1 = '',
+    this.line2 = '',
+    this.cityName = '',
+    this.postalCode = '',
+    this.state = '',
+    this.countryIso = '',
   });
 
   final String name;
@@ -184,6 +250,24 @@ final class CheckoutInput {
   final String city;
   final String phone;
   final PaymentMethod paymentMethod;
+
+  // Structured delivery address, persisted with the order on the backend.
+  final String line1;
+  final String line2;
+  final String cityName;
+  final String postalCode;
+  final String state;
+  final String countryIso;
+
+  /// Structured address payload sent to the backend order API.
+  Map<String, dynamic> get addressDetails => {
+    'line1': line1,
+    'line2': line2,
+    'city': cityName,
+    'postalCode': postalCode,
+    'state': state,
+    'country': countryIso,
+  };
 }
 
 final class OrderReceipt {

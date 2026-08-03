@@ -18,10 +18,7 @@ final class AppFailure {
   final String? code;
   final int? statusCode;
   final Object? cause;
-  final StackTrace? stackTrace;
-
-  /// True when the request failed because the device could not reach the
-  /// server (offline, DNS failure, timeout) rather than a server response.
+  final StackTrace? stackTrace;   
   final bool isNetworkError;
 
   factory AppFailure.fromObject(Object error, [StackTrace? stackTrace]) {
@@ -65,9 +62,6 @@ final class AppFailure {
     );
   }
 
-  /// A connectivity failure has no server response — the device never reached
-  /// the backend (offline, DNS failure, timeout, or a socket error surfaced as
-  /// [DioExceptionType.unknown]).
   static bool _isConnectivityError(DioException error) {
     switch (error.type) {
       case DioExceptionType.connectionError:
@@ -80,6 +74,7 @@ final class AppFailure {
       case DioExceptionType.badCertificate:
       case DioExceptionType.badResponse:
       case DioExceptionType.cancel:
+      case DioExceptionType.transformTimeout:
         return false;
     }
   }

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/localization/app_localizations.dart';
+import '../../../../core/storage/storage_providers.dart';
+import '../../../../core/widgets/top_toast.dart';
 import '../../../cart_order/presentation/pages/book_details_page.dart';
 import '../../../cart_order/presentation/pages/checkout_page.dart';
 import '../../../../core/errors/result.dart';
@@ -10,7 +12,10 @@ import '../../application/store_controller.dart';
 import '../../domain/store_models.dart';
 import '../../../cart_order/presentation/widgets/cart_tab.dart';
 import '../widgets/home_tab.dart';
+import '../../../order/application/order_controller.dart';
+import '../../../order/domain/order_models.dart';
 import '../../../order/presentation/widgets/orders_tab.dart';
+import '../../../order/presentation/widgets/review_bottom_sheet.dart';
 import '../../../profile/presentation/widgets/profile_tab.dart';
 import '../../../profile/presentation/pages/notifications_page.dart';
 import 'books_grid_page.dart';
@@ -33,13 +38,110 @@ class _StoreShell extends ConsumerStatefulWidget {
 }
 
 class _StoreShellState extends ConsumerState<_StoreShell> {
+  /// Storage key for order numbers we've already shown the review popup for.
+  static const _kReviewPromptedOrdersKey = 'review_prompted_order_ids';
+
   int _currentIndex = 0;
+  bool _reviewPromptActive = false;
+
+  /// Called whenever the orders list updates: if an order has just been
+  /// delivered and we haven't asked yet, pop up the review sheet for it.
+  Future<void> _maybePromptDeliveredReview(List<OrderModel> orders) async {
+    if (_reviewPromptActive || !mounted) return;
+
+    final storage = ref.read(keyValueStorageProvider);
+    final prompted =
+        (storage.readStringList(_kReviewPromptedOrdersKey) ?? const [])
+            .toSet();
+
+    OrderModel? candidate;
+    for (final order in orders) {
+      if (order.status == OrderStatus.delivered &&
+          order.orderNumber.isNotEmpty &&
+          order.items.isNotEmpty &&
+          !prompted.contains(order.orderNumber)) {
+        candidate = order;
+        break;
+      }
+    }
+    if (candidate == null) return;
+
+    _reviewPromptActive = true;
+    // Persist immediately so dismissing the sheet doesn't re-nag on the
+    // next refresh — each delivered order prompts exactly once.
+    prompted.add(candidate.orderNumber);
+    await storage.writeStringList(
+      _kReviewPromptedOrdersKey,
+      prompted.toList(),
+    );
+    if (!mounted) {
+      _reviewPromptActive = false;
+      return;
+    }
+
+    final l10n = AppLocalizations.of(context);
+    final result = await ReviewBottomSheet.show(
+      context,
+      reviewerName: candidate.customerName,
+      title: l10n.rateThisOrder,
+      subtitle:
+          '${l10n.orderDeliveredSuccessfully} · #${candidate.orderNumber}',
+    );
+    _reviewPromptActive = false;
+    if (result == null || !mounted) return;
+
+    final repository = ref.read(orderRepositoryProvider);
+    final bookIds = candidate.items
+        .map((item) => item.id)
+        .where((id) => id.isNotEmpty)
+        .toSet();
+
+    String? errorMessage;
+    var submitted = false;
+    for (final bookId in bookIds) {
+      final response = await repository.submitBookReview(
+        bookId: bookId,
+        rating: result.rating,
+        comment: result.comment,
+      );
+      switch (response) {
+        case Success():
+          submitted = true;
+        case ResultFailure(error: final failure):
+          errorMessage ??= failure.message;
+      }
+    }
+    if (!mounted) return;
+
+    showTopToast(
+      context,
+      title: submitted ? l10n.reviewSubmitted : (errorMessage ?? l10n.somethingWentWrong),
+      type: submitted ? ToastType.success : ToastType.error,
+    );
+    if (submitted) {
+      // Refetch books so the new reviews and averages appear immediately.
+      ref.invalidate(booksAsyncProvider);
+    }
+
+    // Handle any further delivered orders that are still waiting.
+    final remaining = ref.read(orderControllerProvider).asData?.value;
+    if (remaining != null) {
+      _maybePromptDeliveredReview(remaining);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final booksAsync = ref.watch(booksAsyncProvider);
     final categories = ref.watch(storeCategoriesProvider);
+
+    ref.listen(orderControllerProvider, (previous, next) {
+      final orders = next.asData?.value;
+      if (orders != null) {
+        _maybePromptDeliveredReview(orders);
+      }
+    });
 
     final homeTab = booksAsync.when(
       loading: () => const _BooksLoadingView(),

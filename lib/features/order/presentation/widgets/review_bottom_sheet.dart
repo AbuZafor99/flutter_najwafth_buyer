@@ -12,9 +12,20 @@ class ReviewResult {
 }
 
 class ReviewBottomSheet extends StatefulWidget {
-  const ReviewBottomSheet({super.key, this.reviewerName});
+  const ReviewBottomSheet({
+    super.key,
+    this.reviewerName,
+    this.title,
+    this.subtitle,
+  });
 
   final String? reviewerName;
+
+  /// Optional context header, e.g. "Rate this order" after a delivery.
+  final String? title;
+
+  /// Optional secondary line under [title], e.g. the order number.
+  final String? subtitle;
 
   @override
   State<ReviewBottomSheet> createState() => _ReviewBottomSheetState();
@@ -24,12 +35,18 @@ class ReviewBottomSheet extends StatefulWidget {
   static Future<ReviewResult?> show(
     BuildContext context, {
     String? reviewerName,
+    String? title,
+    String? subtitle,
   }) {
     return showModalBottomSheet<ReviewResult>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => ReviewBottomSheet(reviewerName: reviewerName),
+      builder: (_) => ReviewBottomSheet(
+        reviewerName: reviewerName,
+        title: title,
+        subtitle: subtitle,
+      ),
     );
   }
 }
@@ -85,13 +102,45 @@ class _ReviewBottomSheetState extends State<ReviewBottomSheet> {
             child: Container(
               width: 44,
               height: 4,
-              margin: const EdgeInsets.only(bottom: 20),
+              margin: const EdgeInsets.only(bottom: 12),
               decoration: BoxDecoration(
                 color: const Color(0xFFE2E6EC),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
           ),
+          if (widget.title != null)
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        widget.title!,
+                        style: const TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w700,
+                          color: _titleColor,
+                        ),
+                      ),
+                      if (widget.subtitle != null) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          widget.subtitle!,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Color(0xFF8E98A5),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                _CloseButton(onTap: () => Navigator.of(context).pop()),
+              ],
+            ),
+          if (widget.title != null) const SizedBox(height: 16),
           Row(
             children: [
               CircleAvatar(
@@ -112,6 +161,8 @@ class _ReviewBottomSheetState extends State<ReviewBottomSheet> {
                   ),
                 ),
               ),
+              if (widget.title == null)
+                _CloseButton(onTap: () => Navigator.of(context).pop()),
             ],
           ),
           const SizedBox(height: 20),
@@ -190,6 +241,29 @@ class _ReviewBottomSheetState extends State<ReviewBottomSheet> {
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Round cross button that dismisses the sheet without posting.
+class _CloseButton extends StatelessWidget {
+  const _CloseButton({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: const Color(0xFFF3F8FC),
+      shape: const CircleBorder(),
+      child: InkWell(
+        customBorder: const CircleBorder(),
+        onTap: onTap,
+        child: const Padding(
+          padding: EdgeInsets.all(8),
+          child: Icon(Icons.close_rounded, size: 20, color: Color(0xFF56606B)),
+        ),
       ),
     );
   }

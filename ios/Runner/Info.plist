@@ -26,12 +26,6 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
-	<key>NSCameraUsageDescription</key>
-	<string>We need camera access so you can take a profile picture.</string>
-	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>We need permission to save selected profile pictures.</string>
-	<key>NSPhotoLibraryUsageDescription</key>
-	<string>We need access to your photo library to let you choose a profile picture.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
@@ -72,5 +66,13 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>This app uses your camera to take photos</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>This app uses your photo library to select images</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>This app uses your microphone for audio recording</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>This app uses your location for mapping and ride tracking</string>
 </dict>
 </plist>

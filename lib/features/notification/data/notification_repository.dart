@@ -69,16 +69,27 @@ final class NotificationRepository {
     };
   }
 
-  /// The backend exposes no device-token or push-preference routes, so FCM
-  /// token registration is a local no-op and the push toggle is persisted
-  /// on-device (see profile tab). If the backend gains
-  /// `POST /notification/device-token` later, call it from here.
+  /// Registers this device's FCM token so the backend can push to it.
   Future<Result<void>> registerDeviceToken(String token) async {
-    return const Success(null);
+    final result = await _client.post<dynamic>(
+      '/notification/device-token',
+      data: {'token': token},
+    );
+    return switch (result) {
+      Success() => const Success(null),
+      ResultFailure(error: final e) => ResultFailure(e),
+    };
   }
 
-  /// See [registerDeviceToken] — nothing to remove server-side.
+  /// Removes this device's FCM token from the backend (call on logout).
   Future<Result<void>> removeDeviceToken(String token) async {
-    return const Success(null);
+    final result = await _client.delete<dynamic>(
+      '/notification/device-token',
+      data: {'token': token},
+    );
+    return switch (result) {
+      Success() => const Success(null),
+      ResultFailure(error: final e) => ResultFailure(e),
+    };
   }
 }

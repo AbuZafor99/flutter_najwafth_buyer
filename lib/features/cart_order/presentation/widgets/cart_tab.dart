@@ -52,71 +52,84 @@ class CartTab extends ConsumerWidget {
 
   Widget _buildEmptyCart(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24),
-        child: CustomPaint(
-          painter: _DashedRectPainter(color: const Color(0xFF5A91C4)),
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 48, horizontal: 24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 100,
-                  height: 100,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFF3F8FC),
-                    shape: BoxShape.circle,
+    return LayoutBuilder(
+      builder: (context, constraints) => SingleChildScrollView(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(minHeight: constraints.maxHeight),
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+              child: CustomPaint(
+                painter: _DashedRectPainter(color: const Color(0xFF5A91C4)),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 48,
+                    horizontal: 24,
                   ),
-                  child: const Center(
-                    child: Icon(
-                      Icons.cloud_upload_outlined,
-                      size: 48,
-                      color: Color(0xFF5A91C4),
-                    ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 100,
+                        height: 100,
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFF3F8FC),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Center(
+                          child: Icon(
+                            Icons.cloud_upload_outlined,
+                            size: 48,
+                            color: Color(0xFF5A91C4),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      Text(
+                        l10n.yourCartIsEmpty,
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF243041),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        l10n.cartEmptyMessage,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Color(0xFF8E98A5),
+                          height: 1.5,
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      ElevatedButton(
+                        onPressed: onHomeTap,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF5A91C4),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 32,
+                            vertical: 12,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        child: Text(
+                          l10n.browseBooks,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 24),
-                Text(
-                  l10n.yourCartIsEmpty,
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF243041),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  l10n.cartEmptyMessage,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Color(0xFF8E98A5),
-                    height: 1.5,
-                  ),
-                ),
-                const SizedBox(height: 24),
-                ElevatedButton(
-                  onPressed: onHomeTap,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF5A91C4),
-                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  child: Text(
-                    l10n.browseBooks,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         ),
@@ -143,9 +156,14 @@ class CartTab extends ConsumerWidget {
               return CartItemCard(
                 book: item,
                 quantity: quantity,
-                onAdd: () => ref.read(storeControllerProvider.notifier).addToCart(item),
-                onRemove: () => ref.read(storeControllerProvider.notifier).setQuantity(item, quantity - 1),
-                onDelete: () => ref.read(storeControllerProvider.notifier).setQuantity(item, 0),
+                onAdd: () =>
+                    ref.read(storeControllerProvider.notifier).addToCart(item),
+                onRemove: () => ref
+                    .read(storeControllerProvider.notifier)
+                    .setQuantity(item, quantity - 1),
+                onDelete: () => ref
+                    .read(storeControllerProvider.notifier)
+                    .setQuantity(item, 0),
               );
             },
           ),
@@ -173,10 +191,7 @@ class CartTab extends ConsumerWidget {
                   children: [
                     Text(
                       l10n.totalPrice,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF8E98A5),
-                      ),
+                      style: TextStyle(fontSize: 12, color: Color(0xFF8E98A5)),
                     ),
                     const SizedBox(height: 4),
                     Text(
@@ -193,7 +208,10 @@ class CartTab extends ConsumerWidget {
                   onPressed: onCheckoutTap,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF5A91C4),
-                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 32,
+                      vertical: 16,
+                    ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
@@ -230,7 +248,7 @@ class _DashedRectPainter extends CustomPainter {
 
     const dashWidth = 5.0;
     const dashSpace = 5.0;
-    
+
     // Top border
     double startX = 0;
     while (startX < size.width) {
@@ -240,13 +258,21 @@ class _DashedRectPainter extends CustomPainter {
     // Right border
     double startY = 0;
     while (startY < size.height) {
-      canvas.drawLine(Offset(size.width, startY), Offset(size.width, startY + dashWidth), paint);
+      canvas.drawLine(
+        Offset(size.width, startY),
+        Offset(size.width, startY + dashWidth),
+        paint,
+      );
       startY += dashWidth + dashSpace;
     }
     // Bottom border
     startX = size.width;
     while (startX > 0) {
-      canvas.drawLine(Offset(startX, size.height), Offset(startX - dashWidth, size.height), paint);
+      canvas.drawLine(
+        Offset(startX, size.height),
+        Offset(startX - dashWidth, size.height),
+        paint,
+      );
       startX -= dashWidth + dashSpace;
     }
     // Left border

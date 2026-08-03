@@ -62,7 +62,7 @@ class _OrdersTabState extends ConsumerState<OrdersTab> {
         children: [
           // Filter Chips Row
           SizedBox(
-            height: 46,
+            height: 38,
             child: ListView(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -160,6 +160,27 @@ class _OrdersTabState extends ConsumerState<OrdersTab> {
     );
   }
 
+  /// Color for a tab's count so it matches its order status at a glance.
+  /// [isSelected] chips sit on the blue gradient, so they use brighter tints
+  /// that stay legible; unselected chips use the saturated status colors.
+  Color _countColor(String filter, bool isSelected) {
+    return switch (filter) {
+      'pending' => isSelected
+          ? const Color(0xFFFFD54F)
+          : const Color(0xFFB8860B),
+      'processing' => isSelected
+          ? const Color(0xFF8FE6AE)
+          : const Color(0xFF1F7A3D),
+      'picked' => isSelected
+          ? const Color(0xFFFFC48A)
+          : const Color(0xFFD2761F),
+      'delivered' => isSelected
+          ? const Color(0xFFCDE8FB)
+          : const Color(0xFF2E9BE5),
+      _ => isSelected ? const Color(0xFFFFD54F) : const Color(0xFF5A91C4),
+    };
+  }
+
   Widget _buildFilterChip(BuildContext context, String filter, int count) {
     final l10n = AppLocalizations.of(context);
     final label = switch (filter) {
@@ -169,14 +190,16 @@ class _OrdersTabState extends ConsumerState<OrdersTab> {
       'delivered' => l10n.delivered,
       _ => l10n.all,
     };
-    String displayLabel = label;
-    if (filter == OrderStatus.pending.name || filter == OrderStatus.picked.name) {
-      if (count > 0) {
-        displayLabel = '$label ($count)';
-      }
-    }
-
     final isSelected = _selectedFilter == filter;
+
+    // Show the count on every tab (All, Pending, Processing, Picked,
+    // Delivered) so each filter surfaces how many orders it holds — but only
+    // when there's at least one; a "(0)" adds no information. The number is
+    // tinted to match its status color so the user links tab → status at a
+    // glance. On the selected (blue gradient) chip we use brighter variants so
+    // the number stays legible.
+    final labelColor = isSelected ? Colors.white : _countColor(filter, false);
+    final countColor = _countColor(filter, isSelected);
 
     return GestureDetector(
       onTap: () {
@@ -185,22 +208,34 @@ class _OrdersTabState extends ConsumerState<OrdersTab> {
         });
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 22),
+        padding: const EdgeInsets.symmetric(horizontal: 16),
         alignment: Alignment.center,
         decoration: BoxDecoration(
           gradient: isSelected ? _kSelectedChipGradient : null,
           color: isSelected ? null : Colors.white,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(10),
           border: isSelected
               ? null
               : Border.all(color: const Color(0xFF5A91C4), width: 1.4),
         ),
-        child: Text(
-          displayLabel,
-          style: TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w600,
-            color: isSelected ? Colors.white : const Color(0xFF5A91C4),
+        child: Text.rich(
+          TextSpan(
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: labelColor,
+            ),
+            children: [
+              TextSpan(text: label),
+              if (count > 0)
+                TextSpan(
+                  text: ' ($count)',
+                  style: TextStyle(
+                    color: countColor,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+            ],
           ),
         ),
       ),

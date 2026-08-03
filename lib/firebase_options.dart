@@ -51,17 +51,17 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyBQ2brVZfiVhXQAyeosKEM_ApSJGL1g7ws',
-    appId: '1:300855511746:android:668479e44a8da3290b495b',
+    appId: '1:300855511746:android:b3e1863e55eb958c0b495b',
     messagingSenderId: '300855511746',
     projectId: 'books-on-wheels-d198a',
     storageBucket: 'books-on-wheels-d198a.firebasestorage.app',
   );
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyCopBzdMdFo3OeJgjXqPpHwHUE9Q90bpEA',
-    appId: '1:300855511746:ios:ce4a021b74c7356e0b495b',
+    appId: '1:300855511746:ios:f0c040283f4b3ed30b495b',
     messagingSenderId: '300855511746',
     projectId: 'books-on-wheels-d198a',
     storageBucket: 'books-on-wheels-d198a.firebasestorage.app',
-    iosBundleId: 'com.najwafth.buyer.flutterNajwafthBuyer',
+    iosBundleId: 'com.khalids.booksonwheels',
   );
 }
