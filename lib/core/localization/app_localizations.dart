@@ -62,6 +62,25 @@ class AppLocalizations {
   String get forgotPassword =>
       isFrench ? 'Mot de passe oublié ?' : 'Forgot password?';
   String get signIn => isFrench ? 'Se connecter' : 'Sign in';
+  String get logIn => isFrench ? 'Connexion' : 'Login';
+  String get signInRequired =>
+      isFrench ? 'Connexion requise' : 'Sign In Required';
+  String signInToAccessTab(String tabName) => isFrench
+      ? 'Veuillez vous connecter ou créer un compte pour accéder à votre section $tabName.'
+      : 'Please sign in or create an account to access your $tabName.';
+  String get logInOrSignUp =>
+      isFrench ? 'Se connecter / S’inscrire' : 'Log In / Sign Up';
+  String get signInToPurchase => isFrench
+      ? 'Veuillez vous connecter ou créer un compte pour acheter ce livre.'
+      : 'Please sign in or create an account to purchase this book.';
+  String get signInToReview => isFrench
+      ? 'Veuillez vous connecter pour laisser un avis.'
+      : 'Please sign in to write a review.';
+  String get continueToSignIn =>
+      isFrench ? 'Continuer vers la connexion' : 'Continue to sign in';
+  String get bookDetailsUnavailable => isFrench
+      ? 'Les détails actuels du livre sont indisponibles. Affichage des informations du catalogue.'
+      : 'Current book details are unavailable. Showing catalog information.';
   String get sessionExpiredTitle =>
       isFrench ? 'Session expirée' : 'Session expired';
   String get sessionExpiredMessage => isFrench
@@ -262,6 +281,9 @@ class AppLocalizations {
   String get noBooksFoundInCategory => isFrench
       ? 'Aucun livre trouvé dans cette catégorie'
       : 'No books found in this category';
+  String get showingCachedCategoryBooks => isFrench
+      ? 'Affichage des livres disponibles dans le catalogue.'
+      : 'Showing available books from the catalog.';
   String get showLess => isFrench ? 'Voir moins' : 'Show less';
   String get readMore => isFrench ? 'Lire plus' : 'Read more';
   String get addToCart => isFrench ? 'Ajouter au panier' : 'Add to Cart';
@@ -827,12 +849,12 @@ These Terms of Sale are subject to French law.""";
   String get enterValidPhone => isFrench
       ? 'Entrez un numéro de téléphone valide.'
       : 'Enter a valid phone number.';
-  String get phoneTooShort => isFrench
-      ? 'Ce numéro est trop court.'
-      : 'This number is too short.';
+  String get phoneTooShort =>
+      isFrench ? 'Ce numéro est trop court.' : 'This number is too short.';
   String get phoneTooLong =>
       isFrench ? 'Ce numéro est trop long.' : 'This number is too long.';
-  String get selectCountry => isFrench ? 'Sélectionner le pays' : 'Select country';
+  String get selectCountry =>
+      isFrench ? 'Sélectionner le pays' : 'Select country';
   String get searchCountry =>
       isFrench ? 'Rechercher un pays' : 'Search country';
   String get noCountryFound =>
@@ -870,8 +892,7 @@ These Terms of Sale are subject to French law.""";
   String get enterPostalCode => isFrench ? 'Code postal' : 'Postal code';
   String get stateRegion =>
       isFrench ? 'Région (facultatif)' : 'State / Region (optional)';
-  String get enterStateRegion =>
-      isFrench ? 'Région' : 'State or region';
+  String get enterStateRegion => isFrench ? 'Région' : 'State or region';
   String get addressDetailsHint => isFrench
       ? 'Choisissez une suggestion pour remplir automatiquement les champs.'
       : 'Pick a suggestion to auto-fill the fields below.';

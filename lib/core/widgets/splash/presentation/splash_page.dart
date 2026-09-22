@@ -38,7 +38,7 @@ class _SplashPageState extends ConsumerState<SplashPage> {
     }
 
     final authState = ref.read(authControllerProvider);
-    final route = authState.isAuthenticated
+    final route = authState.isAuthenticated || authState.onboardingCompleted
         ? AuthRoutes.home
         : AuthRoutes.onboarding;
 

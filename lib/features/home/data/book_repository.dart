@@ -1,3 +1,5 @@
+import 'package:dio/dio.dart';
+
 import '../../../core/errors/result.dart';
 import '../../../core/network/api_client.dart';
 import '../domain/store_models.dart';
@@ -58,9 +60,32 @@ final class BookRepository {
       parser: (data) {
         _assertSuccess(data);
         final bookData = (data as Map<String, dynamic>)['data'];
-        if (bookData is! Map<String, dynamic>) throw Exception('Book data not found');
+        if (bookData is! Map<String, dynamic>) {
+          throw Exception('Book data not found');
+        }
         return BookItem.fromJson(bookData);
       },
+    );
+  }
+
+  /// The catalog route is public. The request marker keeps any stored account
+  /// header off guest category requests without changing authenticated calls.
+  Future<Result<BooksResponse>> getPublicCategoryBooks({
+    required String categoryId,
+    int page = 1,
+    int limit = 100,
+  }) {
+    return _client.get<BooksResponse>(
+      '/books',
+      queryParameters: {
+        'category': categoryId,
+        'page': page,
+        'limit': limit,
+        'sortBy': 'createdAt',
+        'sortOrder': 'desc',
+      },
+      options: Options(extra: const {'skipAuth': true}),
+      parser: _parseListResponse,
     );
   }
 
@@ -87,7 +112,9 @@ final class BookRepository {
   }
 
   static void _assertSuccess(dynamic data) {
-    if (data is! Map<String, dynamic>) throw Exception('Invalid server response');
+    if (data is! Map<String, dynamic>) {
+      throw Exception('Invalid server response');
+    }
     if (data['success'] == false) {
       throw Exception(data['message']?.toString() ?? 'Request failed');
     }

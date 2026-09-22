@@ -217,10 +217,11 @@ class _ProfileTabState extends ConsumerState<ProfileTab> {
           GestureDetector(
             onTap: () async {
               final confirm = await LogoutDialog.show(context);
-              if (confirm == true) {
+              if (confirm == true && context.mounted) {
+                final navigator = Navigator.of(context);
                 await ref.read(authControllerProvider.notifier).logout();
-                if (context.mounted) {
-                  Navigator.of(context).pushNamedAndRemoveUntil(
+                if (navigator.mounted) {
+                  navigator.pushNamedAndRemoveUntil(
                     AuthRoutes.signIn,
                     (route) => false,
                   );
@@ -237,7 +238,7 @@ class _ProfileTabState extends ConsumerState<ProfileTab> {
                     color: Color(0xFF5A91C4),
                     size: 22,
                   ),
-                   SizedBox(width: 16),
+                  SizedBox(width: 16),
                   Text(
                     l10n.logOut,
                     style: TextStyle(
@@ -246,7 +247,7 @@ class _ProfileTabState extends ConsumerState<ProfileTab> {
                       color: Color(0xFF5A91C4),
                     ),
                   ),
-                   Spacer(),
+                  Spacer(),
                   Icon(Icons.chevron_right, color: Color(0xFF5A91C4), size: 20),
                 ],
               ),

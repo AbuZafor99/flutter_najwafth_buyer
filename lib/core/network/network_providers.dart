@@ -31,7 +31,14 @@ final dioProvider = Provider<Dio>((ref) {
     QueuedInterceptorsWrapper(
       onRequest: (options, handler) {
         final token = storage.readString('buyer_access_token');
-        if (token != null && token.isNotEmpty) {
+        final hasStoredSession =
+            storage.readBool('buyer_is_authenticated') == true &&
+            (storage.readString('buyer_refresh_token')?.isNotEmpty ?? false);
+        if (options.extra['skipAuth'] == true) {
+          options.headers.removeWhere(
+            (key, _) => key.toLowerCase() == 'authorization',
+          );
+        } else if (hasStoredSession && token != null && token.isNotEmpty) {
           options.headers['Authorization'] = 'Bearer $token';
         }
         if (kDebugMode) {
@@ -73,10 +80,11 @@ final dioProvider = Provider<Dio>((ref) {
             ],
           );
         }
-        if (_isExpiredSessionError(
-          error,
-          storage.readString('buyer_access_token'),
-        )) {
+        if (error.requestOptions.extra['skipAuth'] != true &&
+            _isExpiredSessionError(
+              error,
+              storage.readString('buyer_access_token'),
+            )) {
           final refreshed = await (refreshTokenRequest ??= _refreshSessionToken(
             config: config,
             storage: storage,

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/localization/app_localizations.dart';
+import '../../../auth/application/auth_controller.dart';
+import '../../../auth/presentation/auth_routes.dart';
 import '../../../../core/storage/storage_providers.dart';
 import '../../../../core/widgets/top_toast.dart';
 import '../../../cart_order/presentation/pages/book_details_page.dart';
@@ -20,6 +22,7 @@ import '../../../profile/presentation/widgets/profile_tab.dart';
 import '../../../profile/presentation/pages/notifications_page.dart';
 import 'books_grid_page.dart';
 import 'featured_page.dart';
+import 'public_category_books_page.dart';
 
 class HomePage extends ConsumerWidget {
   const HomePage({super.key});
@@ -51,8 +54,7 @@ class _StoreShellState extends ConsumerState<_StoreShell> {
 
     final storage = ref.read(keyValueStorageProvider);
     final prompted =
-        (storage.readStringList(_kReviewPromptedOrdersKey) ?? const [])
-            .toSet();
+        (storage.readStringList(_kReviewPromptedOrdersKey) ?? const []).toSet();
 
     OrderModel? candidate;
     for (final order in orders) {
@@ -70,10 +72,7 @@ class _StoreShellState extends ConsumerState<_StoreShell> {
     // Persist immediately so dismissing the sheet doesn't re-nag on the
     // next refresh — each delivered order prompts exactly once.
     prompted.add(candidate.orderNumber);
-    await storage.writeStringList(
-      _kReviewPromptedOrdersKey,
-      prompted.toList(),
-    );
+    await storage.writeStringList(_kReviewPromptedOrdersKey, prompted.toList());
     if (!mounted) {
       _reviewPromptActive = false;
       return;
@@ -115,7 +114,9 @@ class _StoreShellState extends ConsumerState<_StoreShell> {
 
     showTopToast(
       context,
-      title: submitted ? l10n.reviewSubmitted : (errorMessage ?? l10n.somethingWentWrong),
+      title: submitted
+          ? l10n.reviewSubmitted
+          : (errorMessage ?? l10n.somethingWentWrong),
       type: submitted ? ToastType.success : ToastType.error,
     );
     if (submitted) {
@@ -133,21 +134,25 @@ class _StoreShellState extends ConsumerState<_StoreShell> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final isAuthenticated = ref.watch(authControllerProvider).isAuthenticated;
     final booksAsync = ref.watch(booksAsyncProvider);
     final categories = ref.watch(storeCategoriesProvider);
 
-    ref.listen(orderControllerProvider, (previous, next) {
-      final orders = next.asData?.value;
-      if (orders != null) {
-        _maybePromptDeliveredReview(orders);
-      }
-    });
+    if (isAuthenticated) {
+      ref.listen(orderControllerProvider, (previous, next) {
+        final orders = next.asData?.value;
+        if (orders != null) {
+          _maybePromptDeliveredReview(orders);
+        }
+      });
+    }
 
     final homeTab = booksAsync.when(
       loading: () => const _BooksLoadingView(),
       error: (error, _) => _BooksErrorView(
         message: error.toString(),
         onRetry: () => ref.invalidate(booksAsyncProvider),
+        showSignIn: !isAuthenticated,
       ),
       data: (books) => HomeTab(
         featuredBooks: books.take(6).toList(),
@@ -161,22 +166,27 @@ class _StoreShellState extends ConsumerState<_StoreShell> {
       ),
     );
 
-    final pages = [
-      homeTab,
-      OrdersTab(onCheckoutTap: _openCheckout),
-      CartTab(
-        onCheckoutTap: _openCheckout,
-        onHomeTap: () => setState(() => _currentIndex = 0),
-      ),
-      const ProfileTab(),
-    ];
+    final pages = isAuthenticated
+        ? <Widget>[
+            homeTab,
+            OrdersTab(onCheckoutTap: _openCheckout),
+            CartTab(
+              onCheckoutTap: _openCheckout,
+              onHomeTap: () => setState(() => _currentIndex = 0),
+            ),
+            const ProfileTab(),
+          ]
+        : <Widget>[homeTab];
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F6F8),
-      body: IndexedStack(index: _currentIndex, children: pages),
+      body: IndexedStack(
+        index: isAuthenticated ? _currentIndex : 0,
+        children: pages,
+      ),
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
-        currentIndex: _currentIndex,
+        currentIndex: isAuthenticated ? _currentIndex : 0,
         backgroundColor: const Color(0xFFF7F7F8),
         elevation: 0,
         selectedItemColor: const Color(0xFF4A9AF0),
@@ -192,7 +202,7 @@ class _StoreShellState extends ConsumerState<_StoreShell> {
           height: 1.25,
         ),
         iconSize: 28,
-        onTap: (index) => setState(() => _currentIndex = index),
+        onTap: (index) => _selectTab(index),
         items: [
           BottomNavigationBarItem(
             icon: Icon(Icons.home_outlined),
@@ -216,6 +226,41 @@ class _StoreShellState extends ConsumerState<_StoreShell> {
         ],
       ),
     );
+  }
+
+  Future<void> _selectTab(int index) async {
+    if (index == 0 || ref.read(authControllerProvider).isAuthenticated) {
+      setState(() => _currentIndex = index);
+      return;
+    }
+
+    final l10n = AppLocalizations.of(context);
+    final tabName = switch (index) {
+      1 => l10n.order,
+      2 => l10n.cart,
+      3 => l10n.profile,
+      _ => l10n.home,
+    };
+    final shouldSignIn = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(l10n.signInRequired),
+        content: Text(l10n.signInToAccessTab(tabName)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: Text(l10n.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: Text(l10n.logInOrSignUp),
+          ),
+        ],
+      ),
+    );
+    if (shouldSignIn == true && mounted) {
+      Navigator.of(context).pushNamed(AuthRoutes.signIn);
+    }
   }
 
   void _openFeatured() {
@@ -248,6 +293,22 @@ class _StoreShellState extends ConsumerState<_StoreShell> {
 
   Future<void> _openCategory(BookCategory category) async {
     final all = ref.read(storeCatalogProvider);
+    if (!ref.read(authControllerProvider).isAuthenticated) {
+      Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => PublicCategoryBooksPage(
+            category: category,
+            cachedBooks: all,
+            onBookTap: _openBookDetails,
+          ),
+          settings: RouteSettings(
+            name: PublicCategoryBooksPage.routeName(category.id),
+          ),
+        ),
+      );
+      return;
+    }
+
     final result = await ref
         .read(bookRepositoryProvider)
         .getBooks(categoryId: category.id, limit: 100);
@@ -271,7 +332,10 @@ class _StoreShellState extends ConsumerState<_StoreShell> {
 
   void _openBookDetails(BookItem book) {
     Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (_) => BookDetailsPage(book: book)),
+      MaterialPageRoute<void>(
+        builder: (_) => BookDetailsPage(book: book),
+        settings: RouteSettings(name: AuthRoutes.bookDetails(book.id)),
+      ),
     );
   }
 
@@ -301,10 +365,15 @@ class _BooksLoadingView extends StatelessWidget {
 }
 
 class _BooksErrorView extends StatelessWidget {
-  const _BooksErrorView({required this.message, required this.onRetry});
+  const _BooksErrorView({
+    required this.message,
+    required this.onRetry,
+    required this.showSignIn,
+  });
 
   final String message;
   final VoidCallback onRetry;
+  final bool showSignIn;
 
   @override
   Widget build(BuildContext context) {
@@ -347,11 +416,14 @@ class _BooksErrorView extends StatelessWidget {
                   ),
                 ),
                 icon: const Icon(Icons.refresh, color: Colors.white),
-                label: Text(
-                  l10n.retry,
-                  style: TextStyle(color: Colors.white),
-                ),
+                label: Text(l10n.retry, style: TextStyle(color: Colors.white)),
               ),
+              if (showSignIn)
+                TextButton(
+                  onPressed: () =>
+                      Navigator.of(context).pushNamed(AuthRoutes.signIn),
+                  child: Text(l10n.signIn),
+                ),
             ],
           ),
         ),

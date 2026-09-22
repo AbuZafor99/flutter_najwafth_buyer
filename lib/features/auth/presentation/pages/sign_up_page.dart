@@ -10,7 +10,9 @@ import '../widgets/auth_scaffold.dart';
 import '../widgets/auth_widgets.dart';
 
 class SignUpPage extends ConsumerStatefulWidget {
-  const SignUpPage({super.key});
+  const SignUpPage({super.key, this.returnToBookId});
+
+  final String? returnToBookId;
 
   @override
   ConsumerState<SignUpPage> createState() => _SignUpPageState();
@@ -61,11 +63,19 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
         return;
       }
 
-      Navigator.of(
-        context,
-      ).pushNamedAndRemoveUntil(AuthRoutes.home, (route) => false);
+      if (widget.returnToBookId case final bookId?) {
+        Navigator.of(context).popUntil(
+          (route) => route.settings.name == AuthRoutes.bookDetails(bookId),
+        );
+      } else {
+        Navigator.of(
+          context,
+        ).pushNamedAndRemoveUntil(AuthRoutes.home, (route) => false);
+      }
     } on AuthFlowException catch (error) {
-      _showMessage(error.isNetworkError ? l10n.noInternetConnection : error.message);
+      _showMessage(
+        error.isNetworkError ? l10n.noInternetConnection : error.message,
+      );
     } catch (_) {
       _showMessage(l10n.somethingWentWrong);
     } finally {
@@ -98,12 +108,11 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
             AuthTextField(
               controller: _nameController,
               hintText: l10n.enterYourFirstName,
-              validator: (value) =>
-                  Validators.required(
-                    value,
-                    label: l10n.fullNameLabel,
-                    l10n: l10n,
-                  ),
+              validator: (value) => Validators.required(
+                value,
+                label: l10n.fullNameLabel,
+                l10n: l10n,
+              ),
               prefixIcon: const Icon(Icons.person_outline_rounded),
             ),
             const SizedBox(height: 18),
@@ -121,12 +130,11 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
               controller: _phoneController,
               hintText: l10n.enterYourPhoneNumber,
               keyboardType: TextInputType.phone,
-              validator: (value) =>
-                  Validators.required(
-                    value,
-                    label: l10n.phoneNumber,
-                    l10n: l10n,
-                  ),
+              validator: (value) => Validators.required(
+                value,
+                label: l10n.phoneNumber,
+                l10n: l10n,
+              ),
               prefixIcon: const Icon(Icons.phone_outlined),
             ),
             const SizedBox(height: 18),
@@ -135,13 +143,12 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
               controller: _passwordController,
               hintText: l10n.enterYourPassword,
               obscureText: _obscurePassword,
-              validator: (value) =>
-                  Validators.minLength(
-                    value,
-                    8,
-                    label: l10n.password,
-                    l10n: l10n,
-                  ),
+              validator: (value) => Validators.minLength(
+                value,
+                8,
+                label: l10n.password,
+                l10n: l10n,
+              ),
               prefixIcon: const Icon(Icons.lock_outline_rounded),
               suffixIcon: GestureDetector(
                 onTap: () {

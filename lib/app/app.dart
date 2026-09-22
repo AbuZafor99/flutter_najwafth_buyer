@@ -71,8 +71,16 @@ final class _NajwafthBuyerAppState extends ConsumerState<NajwafthBuyerApp> {
         final page = switch (settings.name) {
           AuthRoutes.splash => const SplashPage(),
           AuthRoutes.onboarding => const OnboardingPage(),
-          AuthRoutes.signIn => const SignInPage(),
-          AuthRoutes.signUp => const SignUpPage(),
+          AuthRoutes.signIn => SignInPage(
+            returnToBookId: settings.arguments is String
+                ? settings.arguments! as String
+                : null,
+          ),
+          AuthRoutes.signUp => SignUpPage(
+            returnToBookId: settings.arguments is String
+                ? settings.arguments! as String
+                : null,
+          ),
           AuthRoutes.forgotPassword => const ForgotPasswordPage(),
           AuthRoutes.enterOtp => const EnterOtpPage(),
           AuthRoutes.resetPassword => const ResetPasswordPage(),

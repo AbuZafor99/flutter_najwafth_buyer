@@ -20,9 +20,15 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
   int _currentIndex = 0;
 
   final List<_OnboardingItem> _items = const [
-    _OnboardingItem(imageAsset: 'assets/images/onboarding/onboarding_books.png'),
-    _OnboardingItem(imageAsset: 'assets/images/onboarding/onboarding_delivery.png'),
-    _OnboardingItem(imageAsset: 'assets/images/onboarding/onboarding_orders.png'),
+    _OnboardingItem(
+      imageAsset: 'assets/images/onboarding/onboarding_books.png',
+    ),
+    _OnboardingItem(
+      imageAsset: 'assets/images/onboarding/onboarding_delivery.png',
+    ),
+    _OnboardingItem(
+      imageAsset: 'assets/images/onboarding/onboarding_orders.png',
+    ),
   ];
 
   @override
@@ -42,7 +48,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
     if (!mounted) {
       return;
     }
-    Navigator.of(context).pushReplacementNamed(AuthRoutes.signIn);
+    Navigator.of(context).pushReplacementNamed(AuthRoutes.home);
   }
 
   void _goNext() {
@@ -87,10 +93,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                     icon: const Icon(Icons.arrow_back_ios_new_rounded),
                   ),
                   const Spacer(),
-                  TextButton(
-                    onPressed: _completeFlow,
-                    child: Text(l10n.skip),
-                  ),
+                  TextButton(onPressed: _completeFlow, child: Text(l10n.skip)),
                 ],
               ),
             ),
@@ -198,9 +201,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
 }
 
 class _OnboardingItem {
-  const _OnboardingItem({
-    required this.imageAsset,
-  });
+  const _OnboardingItem({required this.imageAsset});
 
   final String imageAsset;
 }

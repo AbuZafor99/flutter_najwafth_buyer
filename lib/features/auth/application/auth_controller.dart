@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
@@ -36,18 +37,22 @@ final class AuthState {
   });
 
   factory AuthState.initial(KeyValueStorage storage) {
+    final accessToken = storage.readString(_AuthStorageKeys.accessToken);
+    final refreshToken = storage.readString(_AuthStorageKeys.refreshToken);
     return AuthState(
       onboardingCompleted:
           storage.readBool(_AuthStorageKeys.onboarding) ?? false,
       isAuthenticated:
-          storage.readBool(_AuthStorageKeys.isAuthenticated) ?? false,
+          (storage.readBool(_AuthStorageKeys.isAuthenticated) ?? false) &&
+          (accessToken?.isNotEmpty ?? false) &&
+          (refreshToken?.isNotEmpty ?? false),
       fullName: storage.readString(_AuthStorageKeys.fullName) ?? '',
       email: storage.readString(_AuthStorageKeys.email) ?? '',
       phone: storage.readString(_AuthStorageKeys.phone) ?? '',
       password: storage.readString(_AuthStorageKeys.password) ?? '',
       rememberMe: storage.readBool(_AuthStorageKeys.rememberMe) ?? false,
-      accessToken: storage.readString(_AuthStorageKeys.accessToken),
-      refreshToken: storage.readString(_AuthStorageKeys.refreshToken),
+      accessToken: accessToken,
+      refreshToken: refreshToken,
       userId: storage.readString(_AuthStorageKeys.userId),
       role: storage.readString(_AuthStorageKeys.role),
       pendingResetEmail: storage.readString(_AuthStorageKeys.pendingResetEmail),
@@ -150,7 +155,8 @@ final class AuthController extends Notifier<AuthState> {
 
     final initial = AuthState.initial(_storage!);
 
-    if (initial.isAuthenticated && initial.role != _appRole) {
+    if (initial.isAuthenticated &&
+        (initial.role != _appRole || !_hasUnexpiredJwt(initial.refreshToken))) {
       Future<void>.microtask(_clearSession);
 
       final sanitized = initial.copyWith(
@@ -158,7 +164,7 @@ final class AuthController extends Notifier<AuthState> {
         clearTokens: true,
       );
 
-      _log('init:sanitized-non-buyer-session', sanitized);
+      _log('init:sanitized-invalid-session', sanitized);
       return sanitized;
     }
 
@@ -451,27 +457,30 @@ final class AuthController extends Notifier<AuthState> {
 
   Future<void> logout() async {
     _logStep('logout:start');
-
-    // Drop this device's push token while we still hold a valid session.
     try {
-      await ref.read(pushNotificationServiceProvider).unregister();
-    } catch (e) {
-      _logStep('logout:push-unregister-failed $e');
-    }
+      // Drop this device's push token while we still hold a valid session.
+      try {
+        await ref.read(pushNotificationServiceProvider).unregister();
+      } catch (e) {
+        _logStep('logout:push-unregister-failed $e');
+      }
 
-    if (state.accessToken != null && state.accessToken!.isNotEmpty) {
-      await ref
-          .read(apiClientProvider)
-          .post<dynamic>(
-            '/auth/logout',
-            options: Options(
-              headers: {'Authorization': 'Bearer ${state.accessToken!}'},
-            ),
-          );
+      if (state.accessToken != null && state.accessToken!.isNotEmpty) {
+        await ref
+            .read(apiClientProvider)
+            .post<dynamic>(
+              '/auth/logout',
+              options: Options(
+                headers: {'Authorization': 'Bearer ${state.accessToken!}'},
+              ),
+            );
+      }
+    } catch (error) {
+      _logStep('logout:remote-failed $error');
+    } finally {
+      await _clearSession();
+      _log('logout:done', state);
     }
-
-    await _clearSession();
-    _log('logout:done', state);
   }
 
   Future<void> expireSession() async {
@@ -566,6 +575,26 @@ final class AuthController extends Notifier<AuthState> {
         'otpRequestedAt:${s.otpRequestedAt}, '
         'otpVerified:${s.otpVerified}, '
         'hasVerifiedResetOtp:${(s.verifiedResetOtp ?? '').isNotEmpty}}';
+  }
+}
+
+bool _hasUnexpiredJwt(String? token) {
+  if (token == null) return false;
+  try {
+    final parts = token.split('.');
+    if (parts.length != 3) return false;
+    final payload = jsonDecode(
+      utf8.decode(base64Url.decode(base64Url.normalize(parts[1]))),
+    );
+    if (payload is! Map<String, dynamic>) return false;
+    final expiry = payload['exp'];
+    return expiry is num &&
+        DateTime.fromMillisecondsSinceEpoch(
+          expiry.toInt() * 1000,
+          isUtc: true,
+        ).isAfter(DateTime.now().toUtc());
+  } on Object {
+    return false;
   }
 }
 

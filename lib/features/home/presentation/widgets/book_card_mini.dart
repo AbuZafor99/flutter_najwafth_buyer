@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/extensions/build_context_extensions.dart';
 import '../../../../core/widgets/top_toast.dart';
+import '../../../auth/application/auth_controller.dart';
+import '../../../auth/presentation/auth_routes.dart';
 import '../../application/store_controller.dart';
 import '../../domain/store_models.dart';
 import 'store_widgets.dart';
@@ -13,7 +15,7 @@ class BookCardMini extends ConsumerWidget {
   final BookItem book;
   final VoidCallback onTap;
 
-  void _addToCart(BuildContext context, WidgetRef ref) {
+  Future<void> _addToCart(BuildContext context, WidgetRef ref) async {
     if (!book.stock) {
       showTopToast(
         context,
@@ -22,6 +24,29 @@ class BookCardMini extends ConsumerWidget {
         title: context.l10n.outOfStock,
         subtitle: book.title,
       );
+      return;
+    }
+    if (!ref.read(authControllerProvider).isAuthenticated) {
+      final l10n = context.l10n;
+      final shouldSignIn = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          content: Text(l10n.signInToPurchase),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: Text(l10n.cancel),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: Text(l10n.logInOrSignUp),
+            ),
+          ],
+        ),
+      );
+      if (shouldSignIn == true && context.mounted) {
+        Navigator.of(context).pushNamed(AuthRoutes.signIn);
+      }
       return;
     }
     ref.read(storeControllerProvider.notifier).addToCart(book);
@@ -33,7 +58,7 @@ class BookCardMini extends ConsumerWidget {
       subtitle: book.title,
     );
   }
-  
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return GestureDetector(
@@ -60,22 +85,51 @@ class BookCardMini extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 4),
-            Text(book.title, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+            Text(
+              book.title,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+            ),
             Row(
               children: [
                 const Icon(Icons.star, color: Color(0xFFFFC83A), size: 18),
                 const SizedBox(width: 2),
-                Text(book.rating.toStringAsFixed(1), style: const TextStyle(fontSize: 14, color: Color(0xFF6E7784))),
-                const Spacer(),
-                StockBadge(inStock: book.stock, compact: true),
+                Text(
+                  book.rating.toStringAsFixed(1),
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Color(0xFF6E7784),
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: FittedBox(
+                    alignment: Alignment.centerRight,
+                    fit: BoxFit.scaleDown,
+                    child: StockBadge(inStock: book.stock, compact: true),
+                  ),
+                ),
               ],
             ),
             Row(
               children: [
-                const Icon(Icons.history_edu, color: Color(0xFF5A91C4), size: 20),
+                const Icon(
+                  Icons.history_edu,
+                  color: Color(0xFF5A91C4),
+                  size: 20,
+                ),
                 const SizedBox(width: 6),
                 Expanded(
-                  child: Text(book.placeName, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12, color: Color(0xFFAFB7C1))),
+                  child: Text(
+                    book.placeName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFFAFB7C1),
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -83,8 +137,12 @@ class BookCardMini extends ConsumerWidget {
               children: [
                 Flexible(
                   child: Text(
-                    formatPrice(book.price), 
-                    style: const TextStyle(fontSize: 16, color: Color(0xFF3694F4), fontWeight: FontWeight.w600),
+                    formatPrice(book.price),
+                    style: const TextStyle(
+                      fontSize: 16,
+                      color: Color(0xFF3694F4),
+                      fontWeight: FontWeight.w600,
+                    ),
                     overflow: TextOverflow.ellipsis,
                     maxLines: 1,
                   ),

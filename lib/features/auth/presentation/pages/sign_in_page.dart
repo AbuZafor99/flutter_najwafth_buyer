@@ -10,7 +10,9 @@ import '../widgets/auth_scaffold.dart';
 import '../widgets/auth_widgets.dart';
 
 class SignInPage extends ConsumerStatefulWidget {
-  const SignInPage({super.key});
+  const SignInPage({super.key, this.returnToBookId});
+
+  final String? returnToBookId;
 
   @override
   ConsumerState<SignInPage> createState() => _SignInPageState();
@@ -53,9 +55,19 @@ class _SignInPageState extends ConsumerState<SignInPage> {
         return;
       }
 
-      Navigator.of(context).pushReplacementNamed(AuthRoutes.home);
+      if (widget.returnToBookId case final bookId?) {
+        Navigator.of(context).popUntil(
+          (route) => route.settings.name == AuthRoutes.bookDetails(bookId),
+        );
+      } else {
+        Navigator.of(
+          context,
+        ).pushNamedAndRemoveUntil(AuthRoutes.home, (route) => false);
+      }
     } on AuthFlowException catch (error) {
-      _showMessage(error.isNetworkError ? l10n.noInternetConnection : error.message);
+      _showMessage(
+        error.isNetworkError ? l10n.noInternetConnection : error.message,
+      );
     } catch (_) {
       _showMessage(l10n.somethingWentWrong);
     } finally {
@@ -170,7 +182,10 @@ class _SignInPageState extends ConsumerState<SignInPage> {
                 leadingText: l10n.dontHaveAccount,
                 actionText: l10n.signUpHere,
                 onTap: () {
-                  Navigator.of(context).pushNamed(AuthRoutes.signUp);
+                  Navigator.of(context).pushNamed(
+                    AuthRoutes.signUp,
+                    arguments: widget.returnToBookId,
+                  );
                 },
               ),
             ),

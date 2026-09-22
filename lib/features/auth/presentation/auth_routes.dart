@@ -9,4 +9,6 @@ final class AuthRoutes {
   static const enterOtp = '/enter-otp';
   static const resetPassword = '/reset-password';
   static const home = '/home';
+
+  static String bookDetails(String id) => '/books/$id';
 }

@@ -5,6 +5,7 @@ import '../../../../core/errors/result.dart';
 import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/widgets/top_toast.dart';
 import '../../../auth/application/auth_controller.dart';
+import '../../../auth/presentation/auth_routes.dart';
 import '../../../home/application/book_provider.dart';
 import '../../../home/application/store_controller.dart';
 import '../../../home/domain/store_models.dart';
@@ -42,7 +43,11 @@ class _BookDetailsPageState extends ConsumerState<BookDetailsPage> {
         titleSpacing: 0,
         leading: IconButton(
           onPressed: () => Navigator.of(context).pop(),
-          icon: const Icon(Icons.chevron_left, color: Color(0xFF243041), size: 28),
+          icon: const Icon(
+            Icons.chevron_left,
+            color: Color(0xFF243041),
+            size: 28,
+          ),
         ),
         title: Text(
           book.title,
@@ -62,7 +67,10 @@ class _BookDetailsPageState extends ConsumerState<BookDetailsPage> {
                 child: SizedBox(
                   width: 16,
                   height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF5A91C4)),
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Color(0xFF5A91C4),
+                  ),
                 ),
               ),
             ),
@@ -74,6 +82,27 @@ class _BookDetailsPageState extends ConsumerState<BookDetailsPage> {
             child: ListView(
               padding: const EdgeInsets.all(16),
               children: [
+                if (bookAsync.hasError) ...[
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFF4E5),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(child: Text(l10n.bookDetailsUnavailable)),
+                        TextButton(
+                          onPressed: () => ref.invalidate(
+                            bookDetailProvider(widget.book.id),
+                          ),
+                          child: Text(l10n.retry),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                ],
                 // ── Cover Image ──────────────────────────────────────
                 Container(
                   width: double.infinity,
@@ -119,7 +148,7 @@ class _BookDetailsPageState extends ConsumerState<BookDetailsPage> {
 
                 // ── Author ────────────────────────────────────────────
                 Text(
-                 "BY ${book.author.toUpperCase()}",
+                  "BY ${book.author.toUpperCase()}",
                   style: const TextStyle(
                     fontSize: 13,
                     color: Color(0xFF8E98A5),
@@ -131,14 +160,21 @@ class _BookDetailsPageState extends ConsumerState<BookDetailsPage> {
                 // ── Shop / Location ───────────────────────────────────
                 Row(
                   children: [
-                    const Icon(Icons.location_on_outlined, size: 14, color: Color(0xFF5A91C4)),
+                    const Icon(
+                      Icons.location_on_outlined,
+                      size: 14,
+                      color: Color(0xFF5A91C4),
+                    ),
                     const SizedBox(width: 4),
                     Expanded(
-                        child: Text(
-                        book.shopName ?? '123 Library, Book City',
+                      child: Text(
+                        book.placeName,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 12, color: Color.fromARGB(255, 99, 105, 112)),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Color.fromARGB(255, 99, 105, 112),
+                        ),
                       ),
                     ),
                   ],
@@ -149,13 +185,18 @@ class _BookDetailsPageState extends ConsumerState<BookDetailsPage> {
                 Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
                         color: const Color(0xFFF3F8FC),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
-                        book.categoryName.isNotEmpty ? book.categoryName : l10n.general,
+                        book.categoryName.isNotEmpty
+                            ? book.categoryName
+                            : l10n.general,
                         style: const TextStyle(
                           fontSize: 12,
                           color: Color(0xFF5A91C4),
@@ -193,7 +234,9 @@ class _BookDetailsPageState extends ConsumerState<BookDetailsPage> {
                 ),
                 const SizedBox(height: 4),
                 GestureDetector(
-                  onTap: () => setState(() => _descriptionExpanded = !_descriptionExpanded),
+                  onTap: () => setState(
+                    () => _descriptionExpanded = !_descriptionExpanded,
+                  ),
                   child: Text(
                     _descriptionExpanded ? l10n.showLess : l10n.readMore,
                     style: const TextStyle(
@@ -247,7 +290,11 @@ class _BookDetailsPageState extends ConsumerState<BookDetailsPage> {
                               width: 32,
                               color: Colors.transparent,
                               child: const Center(
-                                child: Icon(Icons.remove, size: 18, color: Color(0xFF243041)),
+                                child: Icon(
+                                  Icons.remove,
+                                  size: 18,
+                                  color: Color(0xFF243041),
+                                ),
                               ),
                             ),
                           ),
@@ -270,10 +317,16 @@ class _BookDetailsPageState extends ConsumerState<BookDetailsPage> {
                               decoration: BoxDecoration(
                                 color: Colors.white,
                                 borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: const Color(0xFFE8EBF0)),
+                                border: Border.all(
+                                  color: const Color(0xFFE8EBF0),
+                                ),
                               ),
                               child: const Center(
-                                child: Icon(Icons.add, size: 18, color: Color(0xFF243041)),
+                                child: Icon(
+                                  Icons.add,
+                                  size: 18,
+                                  color: Color(0xFF243041),
+                                ),
                               ),
                             ),
                           ),
@@ -315,7 +368,11 @@ class _BookDetailsPageState extends ConsumerState<BookDetailsPage> {
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
-                  icon: const Icon(Icons.shopping_cart_outlined, color: Colors.white, size: 20),
+                  icon: const Icon(
+                    Icons.shopping_cart_outlined,
+                    color: Colors.white,
+                    size: 20,
+                  ),
                   label: Text(
                     book.stock ? l10n.addToCart : l10n.outOfStock,
                     style: const TextStyle(
@@ -343,7 +400,8 @@ class _BookDetailsPageState extends ConsumerState<BookDetailsPage> {
         book.coverImageUrl!,
         fit: BoxFit.cover,
         errorBuilder: (ctx, err, st) => fallback,
-        loadingBuilder: (_, child, progress) => progress == null ? child : fallback,
+        loadingBuilder: (_, child, progress) =>
+            progress == null ? child : fallback,
       );
     }
     if (book.coverImageAsset != null && book.coverImageAsset!.isNotEmpty) {
@@ -356,9 +414,36 @@ class _BookDetailsPageState extends ConsumerState<BookDetailsPage> {
     return fallback;
   }
 
+  Future<void> _promptForAuthentication(String message) async {
+    final l10n = AppLocalizations.of(context);
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => AlertDialog(
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: Text(l10n.continueToSignIn),
+          ),
+        ],
+      ),
+    );
+    if (!mounted) return;
+    Navigator.of(
+      context,
+    ).pushNamed(AuthRoutes.signIn, arguments: widget.book.id);
+  }
+
   void _addToCart(BookItem book) {
     final l10n = AppLocalizations.of(context);
-    ref.read(storeControllerProvider.notifier).addToCart(book, quantity: _quantity);
+    if (!ref.read(authControllerProvider).isAuthenticated) {
+      _promptForAuthentication(l10n.signInToPurchase);
+      return;
+    }
+    ref
+        .read(storeControllerProvider.notifier)
+        .addToCart(book, quantity: _quantity);
     showTopToast(
       context,
       type: ToastType.success,
@@ -372,6 +457,7 @@ class _BookDetailsPageState extends ConsumerState<BookDetailsPage> {
   /// A review is only accepted by the backend once the user has received
   /// the book, so the button unlocks when a delivered order contains it.
   bool _canReview(BookItem book) {
+    if (!ref.watch(authControllerProvider).isAuthenticated) return false;
     final orders = ref.watch(orderControllerProvider).asData?.value;
     if (orders == null) return false;
     return orders.any(
@@ -429,14 +515,16 @@ class _BookDetailsPageState extends ConsumerState<BookDetailsPage> {
         SizedBox(
           width: double.infinity,
           child: ElevatedButton.icon(
-            onPressed: canReview
+            onPressed: !ref.read(authControllerProvider).isAuthenticated
+                ? () => _promptForAuthentication(l10n.signInToReview)
+                : canReview
                 ? () => _openReview(book)
                 : () => showTopToast(
-                      context,
-                      title: l10n.reviewAfterDelivery,
-                      type: ToastType.info,
-                      icon: Icons.local_shipping_outlined,
-                    ),
+                    context,
+                    title: l10n.reviewAfterDelivery,
+                    type: ToastType.info,
+                    icon: Icons.local_shipping_outlined,
+                  ),
             style: ElevatedButton.styleFrom(
               backgroundColor: canReview
                   ? const Color(0xFF5A91C4)
@@ -546,7 +634,9 @@ class _ReviewTile extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      review.userName.isNotEmpty ? review.userName : 'Anonymous',
+                      review.userName.isNotEmpty
+                          ? review.userName
+                          : 'Anonymous',
                       style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -556,7 +646,11 @@ class _ReviewTile extends StatelessWidget {
                     const SizedBox(height: 2),
                     Row(
                       children: [
-                        const Icon(Icons.star, color: Color(0xFFFFC107), size: 14),
+                        const Icon(
+                          Icons.star,
+                          color: Color(0xFFFFC107),
+                          size: 14,
+                        ),
                         const SizedBox(width: 2),
                         Text(
                           review.rating.toDouble().toStringAsFixed(1),
@@ -574,7 +668,10 @@ class _ReviewTile extends StatelessWidget {
               if (review.createdAt != null)
                 Text(
                   l10n.timeAgo(review.createdAt!),
-                  style: const TextStyle(fontSize: 11, color: Color(0xFF8E98A5)),
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: Color(0xFF8E98A5),
+                  ),
                 ),
             ],
           ),
