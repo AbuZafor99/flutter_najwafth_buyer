@@ -69,7 +69,7 @@ class _DeleteAccountDialogState extends ConsumerState<DeleteAccountDialog> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'This action will deactivate your account and log you out. '
+              'This action will permanently delete your account and log you out. '
               'To confirm, please type confirm below:',
             ),
             const SizedBox(height: 16),
