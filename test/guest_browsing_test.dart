@@ -26,11 +26,12 @@ const book = BookItem(
   price: 12,
 );
 
-ApiClient _publicApiClient() {
+ApiClient _publicApiClient({List<RequestOptions>? requests}) {
   final dio = Dio(BaseOptions(baseUrl: 'https://example.test/api/v1'));
   dio.interceptors.add(
     InterceptorsWrapper(
       onRequest: (options, handler) {
+        requests?.add(options);
         final data = switch (options.path) {
           '/books' => {
             'success': true,
@@ -297,6 +298,77 @@ void main() {
     expect(navigatorKey.currentState!.canPop(), isFalse);
     expect(preferences.getString('buyer_access_token'), isNull);
     expect(preferences.getString('buyer_refresh_token'), isNull);
+  });
+
+  testWidgets('account deletion requires confirmation and clears local data', (
+    tester,
+  ) async {
+    final jwt = _unexpiredJwt();
+    SharedPreferences.setMockInitialValues({
+      'buyer_is_authenticated': true,
+      'buyer_access_token': jwt,
+      'buyer_refresh_token': jwt,
+      'buyer_role': 'buyer',
+      'buyer_full_name': 'Reader',
+      'unrelated_cached_value': 'remove-me',
+    });
+    final preferences = await SharedPreferences.getInstance();
+    final requests = <RequestOptions>[];
+    final navigatorKey = GlobalKey<NavigatorState>();
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          sharedPreferencesProvider.overrideWithValue(preferences),
+          apiClientProvider.overrideWithValue(
+            _publicApiClient(requests: requests),
+          ),
+          pushNotificationServiceProvider.overrideWith(_TestPushService.new),
+        ],
+        child: MaterialApp(
+          navigatorKey: navigatorKey,
+          localizationsDelegates: const [AppLocalizations.delegate],
+          home: const HomePage(),
+          routes: {
+            AuthRoutes.signIn: (_) => const Scaffold(body: Text('Login page')),
+          },
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Profile').last);
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.text('Delete Account'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(find.text('Delete Account'));
+    await tester.pumpAndSettle();
+
+    final deleteButton = find.widgetWithText(TextButton, 'Delete');
+    expect(tester.widget<TextButton>(deleteButton).onPressed, isNull);
+    await tester.enterText(find.byType(TextField), 'CONFIRM');
+    await tester.pump();
+    expect(tester.widget<TextButton>(deleteButton).onPressed, isNotNull);
+
+    await tester.tap(deleteButton);
+    await tester.pumpAndSettle();
+
+    expect(
+      requests.any(
+        (request) =>
+            request.method == 'DELETE' && request.path == '/user/account',
+      ),
+      isTrue,
+    );
+    expect(find.text('Login page'), findsOneWidget);
+    expect(navigatorKey.currentState!.canPop(), isFalse);
+    expect(preferences.getKeys(), isEmpty);
+    expect(
+      find.text('Your account has been successfully deleted.'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('guest purchase prompts sign in and keeps book intent', (

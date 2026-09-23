@@ -483,6 +483,36 @@ final class AuthController extends Notifier<AuthState> {
     }
   }
 
+  Future<void> deleteAccount() async {
+    final token = state.accessToken;
+    if (!state.isAuthenticated || token == null || token.isEmpty) {
+      throw const AuthFlowException('Please sign in again.');
+    }
+
+    final result = await ref
+        .read(apiClientProvider)
+        .delete<Map<String, dynamic>>(
+          '/user/account',
+          options: Options(headers: {'Authorization': 'Bearer $token'}),
+          parser: (raw) {
+            if (raw is! Map<String, dynamic>) {
+              throw const AuthFlowException('Unexpected server response.');
+            }
+            if (raw['success'] != true) {
+              throw AuthFlowException(
+                (raw['message'] ?? 'Account deletion failed.').toString(),
+              );
+            }
+            return raw;
+          },
+        );
+    _unwrap(result);
+
+    // Remove saved credentials, personal details, and app preferences together.
+    await _storage!.clear();
+    state = AuthState.initial(_storage!);
+  }
+
   Future<void> expireSession() async {
     _logStep('expireSession:start');
     await _clearSession();

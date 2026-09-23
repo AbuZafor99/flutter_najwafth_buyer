@@ -182,6 +182,10 @@ final class ProfileController extends AsyncNotifier<ProfileState> {
         );
     final profile = _unwrapProfile(result);
 
+    if (!ref.read(authControllerProvider).isAuthenticated) {
+      return const ProfileState.empty();
+    }
+
     await ref
         .read(authControllerProvider.notifier)
         .updateProfileBasics(fullName: profile.name, phone: profile.phone);

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/storage/storage_providers.dart';
+import '../../../../core/widgets/top_toast.dart';
 import '../../../auth/application/auth_controller.dart';
 import '../../application/profile_controller.dart';
 import '../../../auth/presentation/auth_routes.dart';
@@ -12,6 +13,7 @@ import '../pages/order_history_page.dart';
 import '../pages/static_content_page.dart';
 import '../pages/language_page.dart';
 import 'logout_dialog.dart';
+import 'delete_account_dialog.dart';
 
 class ProfileTab extends ConsumerStatefulWidget {
   const ProfileTab({super.key});
@@ -213,6 +215,49 @@ class _ProfileTabState extends ConsumerState<ProfileTab> {
           ),
 
           const SizedBox(height: 20),
+          GestureDetector(
+            onTap: () async {
+              final navigator = Navigator.of(context);
+              final overlay = Overlay.of(context, rootOverlay: true);
+              final deleted = await DeleteAccountDialog.show(context);
+              if (!deleted || !navigator.mounted) return;
+
+              ref.invalidate(profileControllerProvider);
+              navigator.pushNamedAndRemoveUntil(
+                AuthRoutes.signIn,
+                (route) => false,
+              );
+              showTopToast(
+                null,
+                overlay: overlay,
+                title: 'Your account has been successfully deleted.',
+              );
+            },
+            behavior: HitTestBehavior.opaque,
+            child: const Padding(
+              padding: EdgeInsets.symmetric(vertical: 12),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.delete_outline,
+                    color: Color(0xFFC74848),
+                    size: 22,
+                  ),
+                  SizedBox(width: 16),
+                  Text(
+                    'Delete Account',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFFC74848),
+                    ),
+                  ),
+                  Spacer(),
+                  Icon(Icons.chevron_right, color: Color(0xFFC74848), size: 20),
+                ],
+              ),
+            ),
+          ),
           // Log Out
           GestureDetector(
             onTap: () async {
