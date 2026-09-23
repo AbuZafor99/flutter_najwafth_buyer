@@ -67,11 +67,9 @@
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
 	<key>NSCameraUsageDescription</key>
-	<string>This app uses your camera to take photos</string>
+	<string>Books on Wheels uses the camera when you choose Take Photo, for example to capture a new profile picture.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>This app uses your photo library to select images</string>
-	<key>NSMicrophoneUsageDescription</key>
-	<string>This app uses your microphone for audio recording</string>
+	<string>Books on Wheels accesses your photo library when you choose Gallery, for example to upload a profile picture.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>This app uses your location for mapping and ride tracking</string>
 </dict>

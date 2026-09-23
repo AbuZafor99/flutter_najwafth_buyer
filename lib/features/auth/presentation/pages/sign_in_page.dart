@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../core/widgets/top_toast.dart';
 import '../../application/auth_controller.dart';
+import '../../data/apple_sign_in_service.dart';
 import '../auth_routes.dart';
 import '../widgets/auth_scaffold.dart';
 import '../widgets/auth_widgets.dart';
@@ -26,6 +28,7 @@ class _SignInPageState extends ConsumerState<SignInPage> {
   bool _rememberMe = true;
   bool _obscurePassword = true;
   bool _isSubmitting = false;
+  bool _isAppleSubmitting = false;
 
   @override
   void dispose() {
@@ -55,15 +58,7 @@ class _SignInPageState extends ConsumerState<SignInPage> {
         return;
       }
 
-      if (widget.returnToBookId case final bookId?) {
-        Navigator.of(context).popUntil(
-          (route) => route.settings.name == AuthRoutes.bookDetails(bookId),
-        );
-      } else {
-        Navigator.of(
-          context,
-        ).pushNamedAndRemoveUntil(AuthRoutes.home, (route) => false);
-      }
+      _navigateAfterAuthentication();
     } on AuthFlowException catch (error) {
       _showMessage(
         error.isNetworkError ? l10n.noInternetConnection : error.message,
@@ -74,6 +69,41 @@ class _SignInPageState extends ConsumerState<SignInPage> {
       if (mounted) {
         setState(() => _isSubmitting = false);
       }
+    }
+  }
+
+  Future<void> _signInWithApple() async {
+    FocusScope.of(context).unfocus();
+    setState(() => _isAppleSubmitting = true);
+    try {
+      await ref.read(authControllerProvider.notifier).signInWithApple();
+      if (mounted) _navigateAfterAuthentication();
+    } on AppleSignInException catch (error) {
+      if (mounted && !error.isCancelled) _showMessage(error.message);
+    } on AuthFlowException catch (error) {
+      if (!mounted) return;
+      final l10n = AppLocalizations.of(context);
+      _showMessage(
+        error.isNetworkError ? l10n.noInternetConnection : error.message,
+      );
+    } catch (_) {
+      if (mounted) {
+        _showMessage(AppLocalizations.of(context).somethingWentWrong);
+      }
+    } finally {
+      if (mounted) setState(() => _isAppleSubmitting = false);
+    }
+  }
+
+  void _navigateAfterAuthentication() {
+    if (widget.returnToBookId case final bookId?) {
+      Navigator.of(context).popUntil(
+        (route) => route.settings.name == AuthRoutes.bookDetails(bookId),
+      );
+    } else {
+      Navigator.of(
+        context,
+      ).pushNamedAndRemoveUntil(AuthRoutes.home, (route) => false);
     }
   }
 
@@ -190,23 +220,20 @@ class _SignInPageState extends ConsumerState<SignInPage> {
               ),
             ),
             const SizedBox(height: 32),
-            SocialActionButton(
-              icon: Icons.g_mobiledata_rounded,
-              iconColor: const Color(0xFFEA4335),
-              label: l10n.continueWithGoogle,
-              onPressed: () {
-                _showMessage(l10n.googleNotConfigured, type: ToastType.info);
-              },
-            ),
-            const SizedBox(height: 12),
-            SocialActionButton(
-              icon: Icons.facebook_rounded,
-              iconColor: const Color(0xFF1877F2),
-              label: l10n.continueWithFacebook,
-              onPressed: () {
-                _showMessage(l10n.facebookNotConfigured, type: ToastType.info);
-              },
-            ),
+            if (!kIsWeb &&
+                (defaultTargetPlatform == TargetPlatform.iOS ||
+                    defaultTargetPlatform == TargetPlatform.macOS))
+              SocialActionButton(
+                icon: Icons.apple,
+                iconColor: Colors.white,
+                label: l10n.continueWithApple,
+                onPressed: _isSubmitting || _isAppleSubmitting
+                    ? null
+                    : _signInWithApple,
+                isBusy: _isAppleSubmitting,
+                backgroundColor: Colors.black,
+                textColor: Colors.white,
+              ),
             const SizedBox(height: 16),
           ],
         ),

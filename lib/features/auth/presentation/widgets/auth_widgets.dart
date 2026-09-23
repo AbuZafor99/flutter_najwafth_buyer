@@ -227,12 +227,18 @@ class SocialActionButton extends StatelessWidget {
     required this.label,
     required this.onPressed,
     this.iconColor,
+    this.isBusy = false,
+    this.backgroundColor,
+    this.textColor = const Color(0xFF23252B),
   });
 
   final IconData icon;
   final String label;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
   final Color? iconColor;
+  final bool isBusy;
+  final Color? backgroundColor;
+  final Color textColor;
 
   @override
   Widget build(BuildContext context) {
@@ -243,12 +249,25 @@ class SocialActionButton extends StatelessWidget {
       height: compact ? 58 : 62,
       child: OutlinedButton.icon(
         onPressed: onPressed,
-        icon: Icon(icon, color: iconColor, size: compact ? 24 : 28),
+        style: OutlinedButton.styleFrom(
+          backgroundColor: backgroundColor,
+          foregroundColor: textColor,
+        ),
+        icon: isBusy
+            ? SizedBox(
+                width: compact ? 22 : 24,
+                height: compact ? 22 : 24,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: textColor,
+                ),
+              )
+            : Icon(icon, color: iconColor, size: compact ? 24 : 28),
         label: Text(
           label,
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
             fontWeight: FontWeight.w600,
-            color: const Color(0xFF23252B),
+            color: textColor,
             fontSize: compact ? 15 : 16,
           ),
         ),

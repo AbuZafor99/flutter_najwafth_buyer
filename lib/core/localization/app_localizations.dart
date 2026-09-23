@@ -97,6 +97,8 @@ class AppLocalizations {
   String get signInHere => isFrench ? 'Connectez-vous ici' : 'Sign In Here';
   String get continueWithGoogle =>
       isFrench ? 'Continuer avec Google' : 'Continue with Google';
+  String get continueWithApple =>
+      isFrench ? 'Continuer avec Apple' : 'Continue with Apple';
   String get continueWithFacebook =>
       isFrench ? 'Continuer avec Facebook' : 'Continue with Facebook';
   String get googleNotConfigured => isFrench

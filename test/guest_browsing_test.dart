@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_najwafth_buyer/core/localization/app_localizations.dart';
@@ -10,6 +11,8 @@ import 'package:flutter_najwafth_buyer/core/notifications/push_notification_serv
 import 'package:flutter_najwafth_buyer/core/storage/storage_providers.dart';
 import 'package:flutter_najwafth_buyer/core/widgets/splash/presentation/splash_page.dart';
 import 'package:flutter_najwafth_buyer/features/auth/presentation/auth_routes.dart';
+import 'package:flutter_najwafth_buyer/features/auth/data/apple_sign_in_service.dart';
+import 'package:flutter_najwafth_buyer/features/auth/presentation/pages/sign_in_page.dart';
 import 'package:flutter_najwafth_buyer/features/cart_order/presentation/pages/book_details_page.dart';
 import 'package:flutter_najwafth_buyer/features/home/application/book_provider.dart';
 import 'package:flutter_najwafth_buyer/features/home/application/store_controller.dart';
@@ -53,6 +56,21 @@ ApiClient _publicApiClient({List<RequestOptions>? requests}) {
             'success': true,
             'data': {'name': 'Reader'},
           },
+          '/auth/social-login' => {
+            'success': true,
+            'data': {
+              'accessToken': _unexpiredJwt(),
+              'refreshToken': _unexpiredJwt(),
+              'role': 'buyer',
+              '_id': 'apple-user',
+              'user': {
+                '_id': 'apple-user',
+                'name': 'Apple Reader',
+                'email': 'reader@privaterelay.appleid.com',
+                'role': 'buyer',
+              },
+            },
+          },
           _ => {'success': true, 'data': <String, Object>{}},
         };
         handler.resolve(
@@ -76,6 +94,20 @@ class _TestPushService extends PushNotificationService {
 
   @override
   Future<void> unregister() async {}
+}
+
+class _TestAppleSignInService implements AppleSignInService {
+  int signOutCalls = 0;
+
+  @override
+  Future<AppleIdentity> signIn() async {
+    return const AppleIdentity(idToken: 'firebase-apple-token', name: 'Reader');
+  }
+
+  @override
+  Future<void> signOut() async {
+    signOutCalls++;
+  }
 }
 
 String _unexpiredJwt() {
@@ -229,6 +261,9 @@ void main() {
           sharedPreferencesProvider.overrideWithValue(preferences),
           apiClientProvider.overrideWithValue(_publicApiClient()),
           pushNotificationServiceProvider.overrideWith(_TestPushService.new),
+          appleSignInServiceProvider.overrideWithValue(
+            _TestAppleSignInService(),
+          ),
         ],
         child: const MaterialApp(
           localizationsDelegates: [AppLocalizations.delegate],
@@ -268,6 +303,9 @@ void main() {
           sharedPreferencesProvider.overrideWithValue(preferences),
           apiClientProvider.overrideWithValue(_publicApiClient()),
           pushNotificationServiceProvider.overrideWith(_TestPushService.new),
+          appleSignInServiceProvider.overrideWithValue(
+            _TestAppleSignInService(),
+          ),
         ],
         child: MaterialApp(
           navigatorKey: navigatorKey,
@@ -323,6 +361,9 @@ void main() {
             _publicApiClient(requests: requests),
           ),
           pushNotificationServiceProvider.overrideWith(_TestPushService.new),
+          appleSignInServiceProvider.overrideWithValue(
+            _TestAppleSignInService(),
+          ),
         ],
         child: MaterialApp(
           navigatorKey: navigatorKey,
@@ -369,6 +410,64 @@ void main() {
       find.text('Your account has been successfully deleted.'),
       findsOneWidget,
     );
+  });
+
+  testWidgets('Apple sign-in exchanges Firebase identity for app session', (
+    tester,
+  ) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+
+    final preferences = await SharedPreferences.getInstance();
+    final requests = <RequestOptions>[];
+    final appleService = _TestAppleSignInService();
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          sharedPreferencesProvider.overrideWithValue(preferences),
+          apiClientProvider.overrideWithValue(
+            _publicApiClient(requests: requests),
+          ),
+          appleSignInServiceProvider.overrideWithValue(appleService),
+          pushNotificationServiceProvider.overrideWith(_TestPushService.new),
+        ],
+        child: MaterialApp(
+          localizationsDelegates: const [AppLocalizations.delegate],
+          home: const SignInPage(),
+          routes: {
+            AuthRoutes.home: (_) => const Scaffold(body: Text('Home page')),
+          },
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(
+      find.text('Continue with Apple'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(find.text('Continue with Apple'), findsOneWidget);
+    expect(find.text('Continue with Google'), findsNothing);
+    expect(find.text('Continue with Facebook'), findsNothing);
+    await tester.tap(find.text('Continue with Apple'));
+    await tester.pumpAndSettle();
+
+    final request = requests.singleWhere(
+      (item) => item.path == '/auth/social-login',
+    );
+    expect(request.method, 'POST');
+    expect(request.data, {
+      'idToken': 'firebase-apple-token',
+      'provider': 'apple.com',
+      'name': 'Reader',
+    });
+    expect(find.text('Home page'), findsOneWidget);
+    expect(preferences.getBool('buyer_is_authenticated'), isTrue);
+    expect(
+      preferences.getString('buyer_email'),
+      'reader@privaterelay.appleid.com',
+    );
+    debugDefaultTargetPlatformOverride = null;
   });
 
   testWidgets('guest purchase prompts sign in and keeps book intent', (

@@ -10,6 +10,7 @@ import '../../../core/network/network_providers.dart';
 import '../../../core/notifications/push_notification_service.dart';
 import '../../../core/storage/key_value_storage.dart';
 import '../../../core/storage/storage_providers.dart';
+import '../data/apple_sign_in_service.dart';
 
 final authControllerProvider = NotifierProvider<AuthController, AuthState>(
   AuthController.new,
@@ -249,6 +250,75 @@ final class AuthController extends Notifier<AuthState> {
     _log('signIn:done', state);
   }
 
+  Future<void> signInWithApple() async {
+    _logStep('signInWithApple:start');
+    AppleIdentity identity;
+    try {
+      identity = await ref.read(appleSignInServiceProvider).signIn();
+    } on AppleSignInException {
+      rethrow;
+    } on Object {
+      throw const AppleSignInException('Apple sign-in could not be completed.');
+    }
+
+    try {
+      final result = await ref
+          .read(apiClientProvider)
+          .post<Map<String, dynamic>>(
+            '/auth/social-login',
+            data: {
+              'idToken': identity.idToken,
+              'provider': 'apple.com',
+              if (identity.name?.trim().isNotEmpty ?? false)
+                'name': identity.name!.trim(),
+            },
+            parser: _extractDataMap,
+          );
+      final data = _unwrap(result);
+      final accessToken = (data['accessToken'] ?? '').toString();
+      final refreshToken = (data['refreshToken'] ?? '').toString();
+      final user = data['user'];
+      final userMap = user is Map<String, dynamic> ? user : <String, dynamic>{};
+      final role = (data['role'] ?? userMap['role'] ?? '').toString();
+      final userId = (data['_id'] ?? userMap['_id'] ?? '').toString();
+
+      if (accessToken.isEmpty || refreshToken.isEmpty) {
+        throw const AuthFlowException(
+          'Authentication failed. Please try again.',
+        );
+      }
+      if (role.isNotEmpty && role != _appRole) {
+        throw const AuthFlowException(
+          'This account is not authorized for the buyer application.',
+        );
+      }
+
+      state = state.copyWith(
+        isAuthenticated: true,
+        rememberMe: true,
+        onboardingCompleted: true,
+        email: (userMap['email'] ?? '').toString(),
+        fullName:
+            (userMap['name'] ?? userMap['fullName'] ?? identity.name ?? '')
+                .toString(),
+        phone: (userMap['phone'] ?? '').toString(),
+        password: '',
+        accessToken: accessToken,
+        refreshToken: refreshToken,
+        userId: userId.isEmpty ? null : userId,
+        role: role.isEmpty ? null : role,
+      );
+
+      await _storage!.remove(_AuthStorageKeys.password);
+      await _persistSession(rememberMe: true);
+      unawaited(ref.read(pushNotificationServiceProvider).start());
+      _log('signInWithApple:done', state);
+    } on Object {
+      await ref.read(appleSignInServiceProvider).signOut();
+      rethrow;
+    }
+  }
+
   Future<void> signUp({
     required String fullName,
     required String email,
@@ -478,6 +548,11 @@ final class AuthController extends Notifier<AuthState> {
     } catch (error) {
       _logStep('logout:remote-failed $error');
     } finally {
+      try {
+        await ref.read(appleSignInServiceProvider).signOut();
+      } on Object catch (error) {
+        _logStep('logout:apple-sign-out-failed $error');
+      }
       await _clearSession();
       _log('logout:done', state);
     }
@@ -507,6 +582,12 @@ final class AuthController extends Notifier<AuthState> {
           },
         );
     _unwrap(result);
+
+    try {
+      await ref.read(appleSignInServiceProvider).signOut();
+    } on Object catch (error) {
+      _logStep('deleteAccount:apple-sign-out-failed $error');
+    }
 
     // Remove saved credentials, personal details, and app preferences together.
     await _storage!.clear();

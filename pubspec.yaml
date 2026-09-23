@@ -19,8 +19,9 @@ dependencies:
   smooth_page_indicator: ^1.2.1
   google_fonts: ^6.3.2
   image_picker: ^1.2.2
+  firebase_auth: ^6.7.0
   firebase_core: ^4.10.0
-  firebase_messaging: ^16.3.0
+  firebase_messaging: ^16.7.0
   flutter_local_notifications: ^22.2.0
   flutter_stripe: ^13.1.0
   mockito: ^5.7.0
@@ -65,4 +66,3 @@ flutter:
           weight: 700
         - asset: assets/fonts/Poppins-Black.ttf
           weight: 900
-
