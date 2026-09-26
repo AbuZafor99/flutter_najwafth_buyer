@@ -33,6 +33,8 @@ final class BookRepository {
   Future<Result<BooksResponse>> getBooks({
     String? search,
     String? categoryId,
+    String? shopId,
+    bool publicRequest = false,
     int page = 1,
     int limit = 20,
     String sortBy = 'createdAt',
@@ -45,11 +47,13 @@ final class BookRepository {
       'sortOrder': sortOrder,
       if (search != null && search.isNotEmpty) 'search': search,
       if (categoryId != null && categoryId.isNotEmpty) 'category': categoryId,
+      'shopId': ?shopId,
     };
 
     return _client.get<BooksResponse>(
       '/books',
       queryParameters: query,
+      options: publicRequest ? Options(extra: const {'skipAuth': true}) : null,
       parser: _parseListResponse,
     );
   }

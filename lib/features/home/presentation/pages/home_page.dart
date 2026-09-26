@@ -147,22 +147,28 @@ class _StoreShellState extends ConsumerState<_StoreShell> {
       });
     }
 
-    final homeTab = booksAsync.when(
-      loading: () => const _BooksLoadingView(),
-      error: (error, _) => _BooksErrorView(
-        message: error.toString(),
-        onRetry: () => ref.invalidate(booksAsyncProvider),
-        showSignIn: !isAuthenticated,
-      ),
-      data: (books) => HomeTab(
-        featuredBooks: books.take(6).toList(),
-        categories: categories,
-        popularBooks: books,
-        onBookTap: _openBookDetails,
-        onCategoryTap: _openCategory,
-        onNotificationsTap: _openNotifications,
-        onFeaturedTap: _openFeatured,
-        onPopularTap: _openPopular,
+    final books = booksAsync.asData?.value ?? const <BookItem>[];
+    final homeTab = HomeTab(
+      featuredBooks: books.take(6).toList(),
+      categories: categories,
+      popularBooks: books,
+      onBookTap: _openBookDetails,
+      onCategoryTap: _openCategory,
+      onNotificationsTap: _openNotifications,
+      onFeaturedTap: _openFeatured,
+      onPopularTap: _openPopular,
+      onAllBooksTap: _openAllBooks,
+      bookStatus: booksAsync.when(
+        loading: () => const SizedBox(height: 220, child: _BooksLoadingView()),
+        error: (error, _) => SizedBox(
+          height: 300,
+          child: _BooksErrorView(
+            message: error.toString(),
+            onRetry: () => ref.invalidate(booksAsyncProvider),
+            showSignIn: false,
+          ),
+        ),
+        data: (_) => null,
       ),
     );
 
@@ -272,6 +278,18 @@ class _StoreShellState extends ConsumerState<_StoreShell> {
           popularBooks: books,
           onBookTap: _openBookDetails,
           onCategoryTap: _openCategory,
+        ),
+      ),
+    );
+  }
+
+  void _openAllBooks() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => BooksGridPage(
+          title: AppLocalizations.of(context).allBooks,
+          books: ref.read(storeCatalogProvider),
+          onBookTap: _openBookDetails,
         ),
       ),
     );

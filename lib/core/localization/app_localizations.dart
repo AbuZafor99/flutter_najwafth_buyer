@@ -38,6 +38,16 @@ class AppLocalizations {
   String get featuredBookstores =>
       isFrench ? 'Librairies en vedette' : 'Featured Bookstores';
   String get categories => isFrench ? 'Catégories' : 'Categories';
+  String get bookstores => isFrench ? 'Librairies' : 'Bookstores';
+  String get allBookstores =>
+      isFrench ? 'Toutes les librairies' : 'All Bookstores';
+  String get allBooks => isFrench ? 'Tous les livres' : 'All Books';
+  String get noBookstores =>
+      isFrench ? 'Aucune librairie disponible.' : 'No bookstores available.';
+  String get noStoreBooks => isFrench
+      ? 'Cette librairie ne propose pas encore de livres.'
+      : 'This bookstore has no books yet.';
+  String get loadMore => isFrench ? 'Afficher plus' : 'Load more';
   String get popularBooks => isFrench ? 'Livres populaires' : 'Popular Books';
   String get noPopularBooksAvailable => isFrench
       ? 'Aucun livre populaire disponible'

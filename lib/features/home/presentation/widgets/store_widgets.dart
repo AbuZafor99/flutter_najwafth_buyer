@@ -25,8 +25,9 @@ class StockBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final color = inStock ? const Color(0xFF1E9E4A) : const Color(0xFFE5484D);
-    final background =
-        inStock ? const Color(0xFFE7F6EC) : const Color(0xFFFDECEC);
+    final background = inStock
+        ? const Color(0xFFE7F6EC)
+        : const Color(0xFFFDECEC);
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: compact ? 6 : 8,
@@ -213,6 +214,7 @@ class CategoryChipCard extends StatelessWidget {
           children: [
             BookCover(
               title: category.name,
+              fit: BoxFit.cover,
               imageAsset: category.previewImageAsset,
               color: category.color,
               accentColor: Colors.white.withValues(alpha: .85),
@@ -270,7 +272,7 @@ class BookCard extends StatelessWidget {
                   imageUrl: book.coverImageUrl,
                   color: book.coverColor,
                   accentColor: book.coverAccent,
-                  height: compact ? 110 : 118,
+                  height: width.isFinite ? (width - 16) * 1.4 : 210,
                 ),
                 if (trailing != null)
                   Positioned(top: 8, right: 8, child: trailing!),
@@ -364,6 +366,7 @@ class BookCover extends StatelessWidget {
     required this.accentColor,
     this.height = 118,
     this.radius = 14,
+    this.fit = BoxFit.contain,
   });
 
   final String title;
@@ -373,6 +376,7 @@ class BookCover extends StatelessWidget {
   final Color accentColor;
   final double height;
   final double radius;
+  final BoxFit fit;
 
   @override
   Widget build(BuildContext context) {
@@ -390,7 +394,7 @@ class BookCover extends StatelessWidget {
       imageWidget = Image.network(
         imageUrl!,
         width: double.infinity,
-        fit: BoxFit.cover,
+        fit: fit,
         errorBuilder: (ctx, err, st) => fallback,
         loadingBuilder: (_, child, progress) =>
             progress == null ? child : fallback,
@@ -399,7 +403,7 @@ class BookCover extends StatelessWidget {
       imageWidget = Image.asset(
         imageAsset!,
         width: double.infinity,
-        fit: BoxFit.cover,
+        fit: fit,
         errorBuilder: (ctx, err, st) => fallback,
       );
     }

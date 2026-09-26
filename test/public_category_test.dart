@@ -135,6 +135,13 @@ ApiClient _apiClient({
               'category': {'_id': category.id, 'name': category.name},
             },
           },
+          '/shop/public' => {
+            'success': true,
+            'data': {
+              'shops': <Object>[],
+              'pagination': {'page': 1, 'totalPages': 0},
+            },
+          },
           '/category/tree/all' => {
             'success': true,
             'data': [
@@ -228,7 +235,6 @@ void main() {
       250,
       scrollable: find.byType(Scrollable).first,
     );
-    await tester.drag(find.byType(ListView).first, const Offset(0, -220));
     await tester.pumpAndSettle();
     await tester.tap(find.text(category.name));
     await tester.pumpAndSettle();
@@ -285,7 +291,6 @@ void main() {
       250,
       scrollable: find.byType(Scrollable).first,
     );
-    await tester.drag(find.byType(ListView).first, const Offset(0, -220));
     await tester.pumpAndSettle();
 
     await tester.tap(find.text(category.name));

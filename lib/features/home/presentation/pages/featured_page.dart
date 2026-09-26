@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/localization/app_localizations.dart';
 import '../../domain/store_models.dart';
 import '../widgets/featured_book_card.dart';
+import '../widgets/book_card_mini.dart';
 
 class FeaturedPage extends StatelessWidget {
   const FeaturedPage({
@@ -26,10 +27,10 @@ class FeaturedPage extends StatelessWidget {
       appBar: AppBar(
         elevation: 0,
         backgroundColor: const Color(0xFFF5F6F8),
-        leading: BackButton(color: Colors.black,),
+        leading: BackButton(color: Colors.black),
         titleSpacing: 0,
         title: Text(
-          l10n.featuredBookstores,
+          l10n.categories,
           style: TextStyle(
             fontSize: 25,
             fontWeight: FontWeight.w600,
@@ -157,7 +158,7 @@ class FeaturedPage extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           SizedBox(
-            height: 280,
+            height: BookCardMini.heightForWidth(context, 230),
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               itemCount: popularBooks.length,

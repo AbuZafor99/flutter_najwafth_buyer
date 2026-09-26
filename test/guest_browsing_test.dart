@@ -52,6 +52,13 @@ ApiClient _publicApiClient({List<RequestOptions>? requests}) {
           },
           '/category/tree/all' ||
           '/category' => {'success': true, 'data': <Object>[]},
+          '/shop/public' => {
+            'success': true,
+            'data': {
+              'shops': <Object>[],
+              'pagination': {'page': 1, 'totalPages': 0},
+            },
+          },
           '/user/me' => {
             'success': true,
             'data': {'name': 'Reader'},
@@ -175,6 +182,7 @@ void main() {
         overrides: [
           sharedPreferencesProvider.overrideWithValue(preferences),
           storeCatalogProvider.overrideWithValue(const [book]),
+          apiClientProvider.overrideWithValue(_publicApiClient()),
         ],
         child: MaterialApp(
           localizationsDelegates: const [AppLocalizations.delegate],
@@ -187,6 +195,7 @@ void main() {
               onCategoryTap: (_) {},
               onFeaturedTap: () {},
               onPopularTap: () {},
+              onAllBooksTap: () {},
               onNotificationsTap: () {},
             ),
           ),

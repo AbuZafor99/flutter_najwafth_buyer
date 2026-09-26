@@ -139,12 +139,7 @@ class _BookGrid extends StatelessWidget {
   Widget build(BuildContext context) => GridView.builder(
     padding: const EdgeInsets.fromLTRB(12, 8, 12, 16),
     itemCount: books.length,
-    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-      crossAxisCount: 2,
-      mainAxisSpacing: 10,
-      crossAxisSpacing: 10,
-      childAspectRatio: .75,
-    ),
+    gridDelegate: BookCardMini.gridDelegate(context),
     itemBuilder: (context, index) =>
         BookCardMini(book: books[index], onTap: () => onBookTap(books[index])),
   );
@@ -158,12 +153,7 @@ class _CategorySkeleton extends StatelessWidget {
     key: const Key('public-category-loading'),
     padding: const EdgeInsets.fromLTRB(12, 8, 12, 16),
     itemCount: 6,
-    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-      crossAxisCount: 2,
-      mainAxisSpacing: 10,
-      crossAxisSpacing: 10,
-      childAspectRatio: .75,
-    ),
+    gridDelegate: BookCardMini.gridDelegate(context),
     itemBuilder: (_, _) => Container(
       decoration: BoxDecoration(
         color: const Color(0xFFE8ECF1),

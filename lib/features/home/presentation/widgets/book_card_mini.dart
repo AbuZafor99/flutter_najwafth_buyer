@@ -15,6 +15,23 @@ class BookCardMini extends ConsumerWidget {
   final BookItem book;
   final VoidCallback onTap;
 
+  static double heightForWidth(BuildContext context, double width) {
+    final scale = MediaQuery.textScalerOf(context).scale(14) / 14;
+    return (width - 12) * 1.4 + 124 * (scale < 1 ? 1 : scale);
+  }
+
+  static SliverGridDelegate gridDelegate(BuildContext context) {
+    final width = MediaQuery.sizeOf(context).width - 24;
+    final columns = (width / 200).floor().clamp(2, 6);
+    final itemWidth = (width - (columns - 1) * 10) / columns;
+    return SliverGridDelegateWithFixedCrossAxisCount(
+      crossAxisCount: columns,
+      mainAxisSpacing: 10,
+      crossAxisSpacing: 10,
+      mainAxisExtent: heightForWidth(context, itemWidth),
+    );
+  }
+
   Future<void> _addToCart(BuildContext context, WidgetRef ref) async {
     if (!book.stock) {
       showTopToast(
