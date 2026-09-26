@@ -13,7 +13,7 @@ final homeBookstoresProvider = FutureProvider.autoDispose<List<Bookstore>>((
 ) async {
   final result = await ref
       .watch(bookstoreRepositoryProvider)
-      .getStores(limit: 6);
+      .getStores(limit: 4);
   return switch (result) {
     Success(data: final data) => data.stores,
     ResultFailure(error: final error) => throw error,

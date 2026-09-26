@@ -45,10 +45,7 @@ class _BookstoreCarouselState extends ConsumerState<BookstoreCarousel> {
         ),
         const SizedBox(height: 10),
         stores.when(
-          loading: () => const SizedBox(
-            height: 200,
-            child: Center(child: CircularProgressIndicator()),
-          ),
+          loading: () => const _BookstoreLoadingPlaceholder(),
           error: (error, _) => Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
@@ -67,7 +64,18 @@ class _BookstoreCarouselState extends ConsumerState<BookstoreCarousel> {
           data: (items) => items.isEmpty
               ? Padding(
                   padding: const EdgeInsets.all(20),
-                  child: Text(l10n.noBookstores),
+                  child: Center(
+                    child: Column(
+                      children: [
+                        Text(l10n.noBookstores),
+                        TextButton(
+                          onPressed: () =>
+                              ref.invalidate(homeBookstoresProvider),
+                          child: Text(l10n.retry),
+                        ),
+                      ],
+                    ),
+                  ),
                 )
               : LayoutBuilder(
                   builder: (context, constraints) {
@@ -127,4 +135,26 @@ class _BookstoreCarouselState extends ConsumerState<BookstoreCarousel> {
       ],
     );
   }
+}
+
+class _BookstoreLoadingPlaceholder extends StatelessWidget {
+  const _BookstoreLoadingPlaceholder();
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+    height: 190,
+    child: ListView.separated(
+      scrollDirection: Axis.horizontal,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: 2,
+      separatorBuilder: (_, _) => const SizedBox(width: 10),
+      itemBuilder: (_, _) => Container(
+        width: 260,
+        decoration: BoxDecoration(
+          color: const Color(0xFFE9EDF2),
+          borderRadius: BorderRadius.circular(12),
+        ),
+      ),
+    ),
+  );
 }

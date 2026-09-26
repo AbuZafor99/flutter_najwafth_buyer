@@ -19,7 +19,7 @@ class BookstoreBooksPage extends ConsumerWidget {
   static void open(BuildContext context, Bookstore store) =>
       Navigator.of(context).push(
         MaterialPageRoute<void>(
-          settings: RouteSettings(name: '/bookstores/${store.ownerId}'),
+          settings: RouteSettings(name: '/bookstores/${store.id}'),
           builder: (_) => BookstoreBooksPage(store: store),
         ),
       );
@@ -53,7 +53,7 @@ class BookstoreBooksPage extends ConsumerWidget {
       loadPage: (page) async {
         final result = await ref
             .read(bookRepositoryProvider)
-            .getBooks(shopId: store.ownerId, page: page, publicRequest: true);
+            .getBooks(shopId: store.id, page: page, publicRequest: true);
         return switch (result) {
           Success(data: final data) => (
             items: data.books,
@@ -62,6 +62,7 @@ class BookstoreBooksPage extends ConsumerWidget {
           ResultFailure(error: final error) => throw error,
         };
       },
+      itemKey: (book) => book.id,
       itemBuilder: (book) => BookCardMini(
         book: book,
         onTap: () => Navigator.of(context).push(

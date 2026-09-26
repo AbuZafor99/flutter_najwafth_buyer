@@ -19,15 +19,33 @@ class BookstoreRepository {
       if (json is! Map<String, dynamic> || json['success'] != true) {
         throw const FormatException('Invalid bookstore response');
       }
-      final data = json['data'] as Map<String, dynamic>;
-      final pagination = data['pagination'] as Map<String, dynamic>;
+      final data = json['data'];
+      final pagination = json['pagination'];
+      if (data is! List<dynamic> || pagination is! Map<String, dynamic>) {
+        throw const FormatException('Invalid bookstore response');
+      }
+      final currentPage = _intValue(pagination['page'], fallback: page);
+      final totalPages = _intValue(pagination['totalPages']);
       return BookstoresResponse(
-        stores: (data['shops'] as List<dynamic>)
-            .map((item) => Bookstore.fromJson(item as Map<String, dynamic>))
+        stores: data
+            .whereType<Map<String, dynamic>>()
+            .map(
+              (item) => Bookstore.fromJson(item, apiBaseUrl: _client.baseUrl),
+            )
             .toList(growable: false),
-        page: (pagination['page'] as num).toInt(),
-        totalPages: (pagination['totalPages'] as num).toInt(),
+        page: currentPage,
+        limit: _intValue(pagination['limit'], fallback: limit),
+        total: _intValue(pagination['total']),
+        totalPages: totalPages,
+        hasNextPage:
+            pagination['hasNextPage'] == true || currentPage < totalPages,
       );
     },
   );
 }
+
+int _intValue(Object? value, {int fallback = 0}) => switch (value) {
+  final num number => number.toInt(),
+  final String text => int.tryParse(text) ?? fallback,
+  _ => fallback,
+};

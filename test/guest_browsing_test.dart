@@ -519,4 +519,45 @@ void main() {
     expect(find.text('Sign in page'), findsOneWidget);
     expect(signInArgument, book.id);
   });
+
+  testWidgets('book details displays the complete cover without cropping', (
+    tester,
+  ) async {
+    const coverAsset = 'assets/images/books/book_cover_01.png';
+    const bookWithCover = BookItem(
+      id: 'book-with-cover',
+      title: 'Complete Cover',
+      author: 'Author',
+      coverImageAsset: coverAsset,
+      price: 12,
+    );
+    final preferences = await SharedPreferences.getInstance();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          sharedPreferencesProvider.overrideWithValue(preferences),
+          bookDetailProvider(
+            bookWithCover.id,
+          ).overrideWith((ref) async => bookWithCover),
+        ],
+        child: const MaterialApp(
+          localizationsDelegates: [AppLocalizations.delegate],
+          home: BookDetailsPage(book: bookWithCover),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final coverFinder = find.byWidgetPredicate(
+      (widget) =>
+          widget is Image &&
+          widget.image is AssetImage &&
+          (widget.image as AssetImage).assetName == coverAsset,
+    );
+    final cover = tester.widget<Image>(coverFinder);
+
+    expect(cover.fit, BoxFit.contain);
+    expect(tester.takeException(), isNull);
+  });
 }

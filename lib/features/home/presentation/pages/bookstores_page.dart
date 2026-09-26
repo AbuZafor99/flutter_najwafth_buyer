@@ -24,11 +24,12 @@ class BookstoresPage extends ConsumerWidget {
         return switch (result) {
           Success(data: final data) => (
             items: data.stores,
-            hasMore: data.page < data.totalPages,
+            hasMore: data.hasNextPage,
           ),
           ResultFailure(error: final error) => throw error,
         };
       },
+      itemKey: (store) => store.id,
       itemBuilder: (store) => BookstoreCard(
         store: store,
         onTap: () => BookstoreBooksPage.open(context, store),

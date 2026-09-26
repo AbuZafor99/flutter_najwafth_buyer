@@ -398,7 +398,7 @@ class _BookDetailsPageState extends ConsumerState<BookDetailsPage> {
     if (book.coverImageUrl != null && book.coverImageUrl!.isNotEmpty) {
       return Image.network(
         book.coverImageUrl!,
-        fit: BoxFit.cover,
+        fit: BoxFit.contain,
         errorBuilder: (ctx, err, st) => fallback,
         loadingBuilder: (_, child, progress) =>
             progress == null ? child : fallback,
@@ -407,7 +407,7 @@ class _BookDetailsPageState extends ConsumerState<BookDetailsPage> {
     if (book.coverImageAsset != null && book.coverImageAsset!.isNotEmpty) {
       return Image.asset(
         book.coverImageAsset!,
-        fit: BoxFit.cover,
+        fit: BoxFit.contain,
         errorBuilder: (ctx, err, st) => fallback,
       );
     }

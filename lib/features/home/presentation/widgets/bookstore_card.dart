@@ -22,10 +22,10 @@ class BookstoreCard extends StatelessWidget {
         children: [
           AspectRatio(
             aspectRatio: 2.2,
-            child: store.bannerUrl == null
+            child: store.primaryImageUrl == null
                 ? const _BannerPlaceholder()
                 : Image.network(
-                    store.bannerUrl!,
+                    store.primaryImageUrl!,
                     fit: BoxFit.cover,
                     width: double.infinity,
                     loadingBuilder: (_, child, progress) =>
@@ -83,14 +83,22 @@ class BookstoreCard extends StatelessWidget {
 
 class _BannerPlaceholder extends StatelessWidget {
   const _BannerPlaceholder();
+
   @override
-  Widget build(BuildContext context) => const ColoredBox(
-    color: Color(0xFFE6EFF8),
-    child: Center(
-      child: Icon(
-        Icons.storefront_outlined,
-        size: 44,
-        color: Color(0xFF5A91C4),
+  Widget build(BuildContext context) => Image.asset(
+    'assets/images/bookstore_placeholder.png',
+    fit: BoxFit.cover,
+    width: double.infinity,
+    height: double.infinity,
+    semanticLabel: 'Default bookstore image',
+    errorBuilder: (context, error, stackTrace) => const ColoredBox(
+      color: Color(0xFFE6EFF8),
+      child: Center(
+        child: Icon(
+          Icons.storefront_outlined,
+          size: 44,
+          color: Color(0xFF5A91C4),
+        ),
       ),
     ),
   );

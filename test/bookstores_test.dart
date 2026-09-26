@@ -26,7 +26,7 @@ import 'package:flutter_najwafth_buyer/features/home/presentation/widgets/store_
 const ownerId = '111111111111111111111111';
 const secondOwnerId = '333333333333333333333333';
 const store = Bookstore(
-  ownerId: ownerId,
+  id: ownerId,
   name: 'First bookstore',
   address: 'Store address',
 );
@@ -39,19 +39,24 @@ const book = BookItem(
 
 Map<String, dynamic> storesPayload(int page, {bool empty = false}) => {
   'success': true,
-  'data': {
-    'shops': empty
-        ? []
-        : [
-            {
-              'ownerId': page == 1 ? ownerId : secondOwnerId,
-              'shopId': '222222222222222222222222',
-              'name': page == 1 ? 'First bookstore' : 'Second bookstore',
-              'address': 'Store address',
-              'banner': [],
-            },
-          ],
-    'pagination': {'page': page, 'totalPages': empty ? 0 : 2},
+  'data': empty
+      ? []
+      : [
+          {
+            'id': page == 1 ? ownerId : secondOwnerId,
+            'name': page == 1 ? 'First bookstore' : 'Second bookstore',
+            'logo': '/public/store-logo.png',
+            'address': 'Store address',
+            'banner': [],
+            'bookCount': 2,
+          },
+        ],
+  'pagination': {
+    'page': page,
+    'limit': 12,
+    'total': empty ? 0 : 2,
+    'totalPages': empty ? 0 : 2,
+    'hasNextPage': !empty && page < 2,
   },
 };
 
@@ -150,6 +155,44 @@ Future<void> pumpPage(
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
+  test('bookstore parsing tolerates missing optional storefront fields', () {
+    final parsed = Bookstore.fromJson({
+      'id': ownerId,
+      'name': 'Optional fields store',
+      'logo': null,
+      'banner': [null, '/public/banner.png'],
+      'description': null,
+      'address': null,
+      'bookCount': null,
+      'ignoredFutureField': true,
+    }, apiBaseUrl: 'https://example.test/api/v1');
+
+    expect(parsed.logoUrl, isNull);
+    expect(parsed.bannerUrls, ['https://example.test/public/banner.png']);
+    expect(parsed.description, '');
+    expect(parsed.address, '');
+    expect(parsed.bookCount, 0);
+  });
+
+  testWidgets('bookstore card uses the default image when no image exists', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: BookstoreCard(store: store, onTap: () {}),
+        ),
+      ),
+    );
+
+    final image = tester.widget<Image>(find.byType(Image));
+    expect(
+      image.image,
+      const AssetImage('assets/images/bookstore_placeholder.png'),
+    );
+    expect(tester.takeException(), isNull);
+  });
+
   test(
     'public directory and store books strip even a stored account token',
     () async {
@@ -169,7 +212,10 @@ void main() {
           .read(bookstoreRepositoryProvider)
           .getStores(page: 2);
       expect(stores, isA<Success<BookstoresResponse>>());
-      expect(stores.dataOrNull!.stores.single.ownerId, secondOwnerId);
+      expect(stores.dataOrNull!.stores.single.id, secondOwnerId);
+      final resolvedLogo = Uri.parse(stores.dataOrNull!.stores.single.logoUrl!);
+      expect(resolvedLogo.hasScheme, isTrue);
+      expect(resolvedLogo.path, '/public/store-logo.png');
       await container
           .read(bookRepositoryProvider)
           .getBooks(shopId: ownerId, page: 2, publicRequest: true);
@@ -229,6 +275,12 @@ void main() {
       fake,
     );
     await tester.pumpAndSettle();
+    expect(
+      fake.requests
+          .singleWhere((request) => request.path == '/shop/public')
+          .queryParameters['limit'],
+      4,
+    );
     await tester.tap(find.byType(BookstoreCard));
     await tester.pumpAndSettle();
     expect(fake.requests.last.queryParameters['shopId'], ownerId);

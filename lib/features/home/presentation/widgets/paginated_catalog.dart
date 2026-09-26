@@ -14,12 +14,14 @@ class PaginatedCatalog<T> extends StatefulWidget {
     required this.emptyMessage,
     this.header,
     this.bookGrid = false,
+    this.itemKey,
   });
   final Future<CatalogPage<T>> Function(int page) loadPage;
   final Widget Function(T item) itemBuilder;
   final String emptyMessage;
   final Widget? header;
   final bool bookGrid;
+  final Object Function(T item)? itemKey;
 
   @override
   State<PaginatedCatalog<T>> createState() => _PaginatedCatalogState<T>();
@@ -47,8 +49,18 @@ class _PaginatedCatalogState<T> extends State<PaginatedCatalog<T>> {
     try {
       final page = await widget.loadPage(_nextPage);
       if (!mounted) return;
+      final items = <T>[];
+      final itemKey = widget.itemKey;
+      if (itemKey == null) {
+        items.addAll(page.items);
+      } else {
+        final seen = _items.map(itemKey).toSet();
+        for (final item in page.items) {
+          if (seen.add(itemKey(item))) items.add(item);
+        }
+      }
       setState(() {
-        _items.addAll(page.items);
+        _items.addAll(items);
         _hasMore = page.hasMore;
         _nextPage++;
       });

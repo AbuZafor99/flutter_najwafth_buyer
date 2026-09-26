@@ -9,6 +9,8 @@ final class ApiClient {
 
   final Dio _dio;
 
+  String get baseUrl => _dio.options.baseUrl;
+
   Future<Result<T>> get<T>(
     String path, {
     JsonMap? queryParameters,
