@@ -14,6 +14,7 @@ final class AppleIdentity {
 
 abstract interface class AppleSignInService {
   Future<AppleIdentity> signIn();
+  Future<void> revokeAuthorizationIfNeeded();
   Future<void> signOut();
 }
 
@@ -39,6 +40,32 @@ final class FirebaseAppleSignInService implements AppleSignInService {
       }
 
       return AppleIdentity(idToken: idToken, name: user.displayName);
+    } on FirebaseAuthException catch (error) {
+      throw AppleSignInException.fromFirebase(error);
+    }
+  }
+
+  @override
+  Future<void> revokeAuthorizationIfNeeded() async {
+    final user = _auth.currentUser;
+    final usesApple = user?.providerData.any(
+      (provider) => provider.providerId == 'apple.com',
+    );
+    if (user == null || usesApple != true) return;
+
+    try {
+      final provider = AppleAuthProvider()
+        ..addScope('email')
+        ..addScope('name');
+      final credential = await user.reauthenticateWithProvider(provider);
+      final authorizationCode =
+          credential.additionalUserInfo?.authorizationCode;
+      if (authorizationCode == null || authorizationCode.isEmpty) {
+        throw const AppleSignInException(
+          'Apple did not return an authorization code. Please try again.',
+        );
+      }
+      await _auth.revokeTokenWithAuthorizationCode(authorizationCode);
     } on FirebaseAuthException catch (error) {
       throw AppleSignInException.fromFirebase(error);
     }

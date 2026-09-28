@@ -15,15 +15,17 @@ const bool kUseLiveServer = bool.fromEnvironment(
 );
 
 /// Live production API.
-// const String _liveBaseUrl = 'https://api.booksonwheeels.com/api/v1';
-const String _liveBaseUrl = 'http://10.10.26.123:5020/api/v1';
+const String _liveBaseUrl = 'https://api.booksonwheeels.com/api/v1';
 
 /// Local development server host.
 ///
 /// Your machine's LAN IP works for ALL of these at once — physical Android
 /// and iOS devices on the same Wi-Fi, the Android emulator, and the iOS
 /// simulator (both route traffic through your machine's network):
-const String _localHost = '10.10.26.111';
+const String _localHost = String.fromEnvironment(
+  'LOCAL_API_HOST',
+  defaultValue: '127.0.0.1',
+);
 const int _localPort = 5002;
 
 const String _localBaseUrl = 'http://$_localHost:$_localPort/api/v1';

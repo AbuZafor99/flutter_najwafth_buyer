@@ -564,6 +564,12 @@ final class AuthController extends Notifier<AuthState> {
       throw const AuthFlowException('Please sign in again.');
     }
 
+    try {
+      await ref.read(appleSignInServiceProvider).revokeAuthorizationIfNeeded();
+    } on AppleSignInException catch (error) {
+      throw AuthFlowException(error.message);
+    }
+
     final result = await ref
         .read(apiClientProvider)
         .delete<Map<String, dynamic>>(

@@ -105,10 +105,16 @@ class _TestPushService extends PushNotificationService {
 
 class _TestAppleSignInService implements AppleSignInService {
   int signOutCalls = 0;
+  int revokeCalls = 0;
 
   @override
   Future<AppleIdentity> signIn() async {
     return const AppleIdentity(idToken: 'firebase-apple-token', name: 'Reader');
+  }
+
+  @override
+  Future<void> revokeAuthorizationIfNeeded() async {
+    revokeCalls++;
   }
 
   @override
@@ -362,6 +368,7 @@ void main() {
     final preferences = await SharedPreferences.getInstance();
     final requests = <RequestOptions>[];
     final navigatorKey = GlobalKey<NavigatorState>();
+    final appleService = _TestAppleSignInService();
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
@@ -370,9 +377,7 @@ void main() {
             _publicApiClient(requests: requests),
           ),
           pushNotificationServiceProvider.overrideWith(_TestPushService.new),
-          appleSignInServiceProvider.overrideWithValue(
-            _TestAppleSignInService(),
-          ),
+          appleSignInServiceProvider.overrideWithValue(appleService),
         ],
         child: MaterialApp(
           navigatorKey: navigatorKey,
@@ -415,6 +420,8 @@ void main() {
     expect(find.text('Login page'), findsOneWidget);
     expect(navigatorKey.currentState!.canPop(), isFalse);
     expect(preferences.getKeys(), isEmpty);
+    expect(appleService.revokeCalls, 1);
+    expect(appleService.signOutCalls, 1);
     expect(
       find.text('Your account has been successfully deleted.'),
       findsOneWidget,
