@@ -72,15 +72,12 @@ String _resolveBaseUrl() {
   return _localBaseUrl;
 }
 
-/// Stripe publishable key (pk_test_... / pk_live_...). Overridable at build
-/// time so the key never has to be committed:
-/// flutter run --dart-define=STRIPE_PUBLISHABLE_KEY=pk_test_xxx
+/// Stripe publishable key (pk_test_... / pk_live_...). It must be supplied at
+/// build time so a production archive can never silently fall back to test
+/// payments:
+/// flutter build ipa --dart-define=STRIPE_PUBLISHABLE_KEY=pk_live_xxx
 const String kStripePublishableKey = String.fromEnvironment(
   'STRIPE_PUBLISHABLE_KEY',
-  // Stripe TEST publishable key (safe to embed — publishable keys are
-  // public by design). Swap for the pk_live_ key before release.
-  defaultValue:
-      'pk_test_51S6pMbRZVOYD6qjBukBi2VyPiTtIhzAyYzmfyAo4izzIwemOo7I3fUYELhxmTJeNln7zMiztFA4CKihsybqrJlo800nWzvIXZY',
 );
 
 /// Apple Pay merchant identifier registered in the Apple Developer portal
