@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final appleSignInServiceProvider = Provider<AppleSignInService>(
@@ -92,9 +93,19 @@ final class AppleSignInException implements Exception {
       );
     }
 
-    return AppleSignInException(
-      error.message ?? 'Apple sign-in could not be completed.',
+    debugPrint(
+      '[auth] Apple sign-in failed: code=${error.code} message=${error.message}',
     );
+
+    // Firebase's internal-error text is developer-facing ("print and inspect
+    // the error details…"), so never surface it to users.
+    if (error.code == 'internal-error' || error.message == null) {
+      return const AppleSignInException(
+        'Apple sign-in could not be completed. Please try again later.',
+      );
+    }
+
+    return AppleSignInException(error.message!);
   }
 
   final String message;
