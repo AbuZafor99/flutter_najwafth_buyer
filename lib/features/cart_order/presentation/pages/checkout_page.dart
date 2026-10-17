@@ -381,12 +381,12 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
                 const SizedBox(height: 12),
                 _buildSummaryRow(
                   l10n.subtotal,
-                  '\$${subtotal.toStringAsFixed(2)}',
+                  '£${subtotal.toStringAsFixed(2)}',
                 ),
                 const SizedBox(height: 8),
                 _buildSummaryRow(
                   l10n.deliveryFee,
-                  '\$${deliveryFee.toStringAsFixed(2)}',
+                  '£${deliveryFee.toStringAsFixed(2)}',
                 ),
                 const Padding(
                   padding: EdgeInsets.symmetric(vertical: 12),
@@ -404,7 +404,7 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
                       ),
                     ),
                     Text(
-                      '\$${total.toStringAsFixed(2)}',
+                      '£${total.toStringAsFixed(2)}',
                       style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w700,

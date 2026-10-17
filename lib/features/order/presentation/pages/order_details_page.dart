@@ -262,9 +262,9 @@ class OrderDetailsPage extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 16),
-          _buildSummaryRow(AppLocalizations.of(context).subtotal, '\$${order.subtotal.toStringAsFixed(2)}'),
+          _buildSummaryRow(AppLocalizations.of(context).subtotal, '£${order.subtotal.toStringAsFixed(2)}'),
           const SizedBox(height: 8),
-          _buildSummaryRow(AppLocalizations.of(context).deliveryFee, '\$${order.deliveryFee.toStringAsFixed(2)}'),
+          _buildSummaryRow(AppLocalizations.of(context).deliveryFee, '£${order.deliveryFee.toStringAsFixed(2)}'),
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 12),
             child: Divider(color: Color(0xFFE8EBF0), height: 1),
@@ -277,7 +277,7 @@ class OrderDetailsPage extends ConsumerWidget {
                 style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFF243041)),
               ),
               Text(
-                '\$${order.total.toStringAsFixed(2)}',
+                '£${order.total.toStringAsFixed(2)}',
                 style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: _accentBlue),
               ),
             ],
@@ -417,7 +417,7 @@ class OrderDetailsPage extends ConsumerWidget {
                                 crossAxisAlignment: CrossAxisAlignment.end,
                                 children: [
                                   Text(
-                                    '\$ ${item.price.toStringAsFixed(2)}',
+                                    '£ ${item.price.toStringAsFixed(2)}',
                                     style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: _accentBlue),
                                   ),
                                   Text(

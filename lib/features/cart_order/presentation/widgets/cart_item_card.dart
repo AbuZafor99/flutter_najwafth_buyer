@@ -125,7 +125,7 @@ class CartItemCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '\$${book.price.toStringAsFixed(2)}',
+                          '£${book.price.toStringAsFixed(2)}',
                           style: const TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
@@ -133,7 +133,7 @@ class CartItemCard extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          'Total: \$${(book.price * quantity).toStringAsFixed(2)}',
+                          'Total: £${(book.price * quantity).toStringAsFixed(2)}',
                           style: const TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.w500,

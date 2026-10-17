@@ -195,7 +195,7 @@ class CartTab extends ConsumerWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '\$${ref.read(storeControllerProvider.notifier).subtotal(cartItems.map((e) => e.key).toList()).toStringAsFixed(2)}',
+                      '£${ref.read(storeControllerProvider.notifier).subtotal(cartItems.map((e) => e.key).toList()).toStringAsFixed(2)}',
                       style: const TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.w700,
