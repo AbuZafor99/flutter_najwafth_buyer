@@ -85,9 +85,9 @@ class OrderConfirmedSheet extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          _buildSummaryRow(l10n.subtotal, '\$${subtotal.toStringAsFixed(2)}'),
+          _buildSummaryRow(l10n.subtotal, '£${subtotal.toStringAsFixed(2)}'),
           const SizedBox(height: 8),
-          _buildSummaryRow(l10n.deliveryFee, '\$${deliveryFee.toStringAsFixed(2)}'),
+          _buildSummaryRow(l10n.deliveryFee, '£${deliveryFee.toStringAsFixed(2)}'),
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 12),
             child: Divider(color: Color(0xFFE8EBF0), height: 1),
@@ -100,7 +100,7 @@ class OrderConfirmedSheet extends StatelessWidget {
                 style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFF243041)),
               ),
               Text(
-                '\$${total.toStringAsFixed(2)}',
+                '£${total.toStringAsFixed(2)}',
                 style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFF5A91C4)),
               ),
             ],

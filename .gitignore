@@ -49,3 +49,5 @@ temp_interactive_push.bat
 
 # Apple Sign in with Apple / APNs private keys
 *.p8
+config.bat
+node_modules

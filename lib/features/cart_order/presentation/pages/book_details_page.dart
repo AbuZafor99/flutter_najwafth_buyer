@@ -257,7 +257,7 @@ class _BookDetailsPageState extends ConsumerState<BookDetailsPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '\$${(book.price * _quantity).toStringAsFixed(2)}',
+                          '£${(book.price * _quantity).toStringAsFixed(2)}',
                           style: const TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.w700,
@@ -265,7 +265,7 @@ class _BookDetailsPageState extends ConsumerState<BookDetailsPage> {
                           ),
                         ),
                         Text(
-                          '\$${(book.price * 1.20 * _quantity).toStringAsFixed(2)}',
+                          '£${(book.price * 1.20 * _quantity).toStringAsFixed(2)}',
                           style: const TextStyle(
                             fontSize: 14,
                             color: Color(0xFF8E98A5),

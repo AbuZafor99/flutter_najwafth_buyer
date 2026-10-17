@@ -5,7 +5,7 @@ import '../../../../core/localization/app_localizations.dart';
 import '../../domain/store_models.dart';
 
 final _currencyFormatter = NumberFormat.currency(
-  symbol: '\$',
+  symbol: '£',
   decimalDigits: 2,
 );
 
